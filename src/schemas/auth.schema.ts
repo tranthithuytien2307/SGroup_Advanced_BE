@@ -24,7 +24,8 @@ export const AuthSchema = {
 
   VerifyEmail: z.object({
     query: z.object({
-      token: z.string().nonempty("Token is required"),
+      email: z.string().email(),
+      code: z.string(),
     }),
   }),
 };

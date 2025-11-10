@@ -4,7 +4,9 @@ import { userProvides } from "../provides/user.provides";
 import { User } from "../entities/user.entity";
 import mailService from "./mail.service";
 import { AppDataSource } from "../data-source";
+import { redisClient } from "../redisClient";
 import { BadRequestError, ForbiddenError, InternalServerError, AuthFailureError, ErrorResponse } from "../handler/error.response";
+import * as crypto from "crypto";
 
 class AuthService {
   async loginUser(
@@ -72,9 +74,12 @@ class AuthService {
 
       const newUser = await authModel.createUser(email, hashString, name);
 
+      const verifyCode = crypto.randomBytes(3).toString("hex");
+      await redisClient.setEx(`verify:${email}`, 300, verifyCode);
+      
       await mailService.sendVerificationEmail(
         newUser.email,
-        newUser.verifyToken!
+        verifyCode
       );
 
       return "Registration success, please check your email to verify.";
@@ -86,19 +91,25 @@ class AuthService {
     }
   }
 
-  async verifyEmail(token: string): Promise<void> {
+  async verifyEmail(email: string, code: string): Promise<void> {
     try {
-      const userRepository = AppDataSource.getRepository(User);
-      const user = await userRepository.findOne({
-        where: { verifyToken: token },
-      });
+      const savedCode = await redisClient.get(`verify:${email}`);
+      if (!savedCode) {
+        throw new Error("Verification code expired or not found");
+      }
+      if (savedCode !== code) {
+        throw new Error("Invalid verification code");
+      }
 
+      const user = await authModel.getUserByEmail(email);
       if (!user) {
-        throw new BadRequestError("Invalid token");
+        throw new Error("User not found");
       }
       user.isVerified = true;
-      user.verifyToken = null;
-      await userRepository.save(user);
+      await AppDataSource.getRepository(User).save(user);
+
+      await redisClient.del(`verify:${email}`);
+      
     } catch (error) {
       if (error instanceof ErrorResponse) {
         throw error;
@@ -150,6 +161,20 @@ class AuthService {
       }
       throw new InternalServerError("Failed to fetch user information");
     }
+  }
+  async resendVerificationCode(email: string): Promise<void>{
+    const user = await authModel.getUserByEmail(email);
+    if (!user){
+      throw new Error("User not found");
+    }
+    if (user.isVerified){
+      throw new Error("User already verified");
+    }
+
+    const verifyCode = crypto.randomBytes(3).toString("hex");
+    await redisClient.setEx(`verify:${email}`, 300, verifyCode);
+
+    await mailService.sendVerificationEmail(user.email, verifyCode);
   }
 }
 

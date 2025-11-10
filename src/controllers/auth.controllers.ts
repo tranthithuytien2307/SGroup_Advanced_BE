@@ -1,13 +1,7 @@
 import { Request, Response } from "express";
 import authService from "../services/auth.service";
-import {
-  ServiceResponse,
-  ResponseStatus,
-} from "../provides/service.response";
-import {
-  BadRequestError,
-  ForbiddenError,
-} from "../handler/error.response";
+import { ServiceResponse, ResponseStatus } from "../provides/service.response";
+import { BadRequestError, ForbiddenError } from "../handler/error.response";
 import { handleServiceResponse } from "../utils/http-handler";
 
 class AuthController {
@@ -56,28 +50,45 @@ class AuthController {
     const { email, password, name } = req.body;
     const user = await authService.registerUser(email, password, name);
     return handleServiceResponse(
-      new ServiceResponse(
-        ResponseStatus.Sucess,
-        "Register success",
-        user,
-        201
-      ),
+      new ServiceResponse(ResponseStatus.Sucess, "Register success", user, 201),
       res
     );
   };
 
   verifyEmail = async (req: Request, res: Response) => {
-    const { token } = req.query;
+  const email = req.query.email as string;
+  const code = req.query.code as string;
 
-    if (!token) {
-      throw new BadRequestError("Missing token");
+  if (!email || !code) {
+    throw new BadRequestError("Missing email or code");
+  }
+
+  await authService.verifyEmail(email, code);
+
+  return handleServiceResponse(
+    new ServiceResponse(
+      ResponseStatus.Sucess,
+      "Email verified successfully",
+      null,
+      200
+    ),
+    res
+  );
+};
+
+
+  resendCode = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) {
+      throw new BadRequestError("Missing email");
     }
 
-    await authService.verifyEmail(token as string);
+    await authService.resendVerificationCode(email);
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
-        "Email verified successfully",
+        "Verification code resent",
         null,
         200
       ),

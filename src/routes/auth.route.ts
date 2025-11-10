@@ -31,6 +31,8 @@ router.post(
   asyncHandler(authController.refreshToken)
 );
 
+router.post("/resend-code", asyncHandler(authController.resendCode));
+
 router.get(
   "/information",
   authMiddleware,

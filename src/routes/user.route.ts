@@ -9,14 +9,14 @@ import { UserSchema } from "../schemas/user.schema";
 const router = Router();
 
 router.get(
-  "/api/users",
+  "/users",
   authMiddleware,
   authorize("view_all"),
   asyncHandler(userController.getUsers)
 );
 
 router.get(
-  "/api/user/:id",
+  "/user/:id",
   authMiddleware,
   authorize("view_self"),
   validateRequest(UserSchema.GetById),
@@ -24,7 +24,7 @@ router.get(
 );
 
 router.post(
-  "/api/user",
+  "/user",
   authMiddleware,
   authorize("create_user"),
   validateRequest(UserSchema.Create),
@@ -32,7 +32,7 @@ router.post(
 );
 
 router.put(
-  "/api/user/:id",
+  "/user/:id",
   authMiddleware,
   authorize("update_user"),
   validateRequest(UserSchema.Update),
@@ -40,7 +40,7 @@ router.put(
 );
 
 router.delete(
-  "/api/user/:id",
+  "/user/:id",
   authMiddleware,
   authorize("delete_user"),
   validateRequest(UserSchema.Delete),
