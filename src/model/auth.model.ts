@@ -50,6 +50,33 @@ class AuthModel {
     }
   }
 
+  async createUserWithGoogle(
+    email: string,
+    name: string,
+    provider: string,
+    provider_id: string,
+    avatar_url?: string
+  ): Promise<User> {
+    try {
+      const userRepository = AppDataSource.getRepository(User);
+
+      const newUser = new User();
+      newUser.email = email;
+      newUser.name = name;
+      newUser.password = null; 
+      newUser.isVerified = true; 
+      newUser.is_oauth = true;
+      newUser.provider = provider;
+      newUser.provider_id = provider_id;
+      newUser.avatar_url = avatar_url || null;
+
+      return await userRepository.save(newUser);
+    } catch (error) {
+      console.error("Error in createUserWithGoogle:", error);
+      throw new Error("Failed to create OAuth user");
+    }
+  }
+
   async updateRefreshToken(
     userId: number,
     refreshToken: string

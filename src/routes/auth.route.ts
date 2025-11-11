@@ -13,6 +13,8 @@ router.post(
   asyncHandler(authController.loginUser)
 );
 
+router.post("/google/login", authController.loginWithGoogle);
+
 router.post(
   "/register",
   validateRequest(AuthSchema.Register),

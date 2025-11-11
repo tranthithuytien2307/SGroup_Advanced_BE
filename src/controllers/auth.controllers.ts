@@ -56,26 +56,25 @@ class AuthController {
   };
 
   verifyEmail = async (req: Request, res: Response) => {
-  const email = req.query.email as string;
-  const code = req.query.code as string;
+    const email = req.query.email as string;
+    const code = req.query.code as string;
 
-  if (!email || !code) {
-    throw new BadRequestError("Missing email or code");
-  }
+    if (!email || !code) {
+      throw new BadRequestError("Missing email or code");
+    }
 
-  await authService.verifyEmail(email, code);
+    await authService.verifyEmail(email, code);
 
-  return handleServiceResponse(
-    new ServiceResponse(
-      ResponseStatus.Sucess,
-      "Email verified successfully",
-      null,
-      200
-    ),
-    res
-  );
-};
-
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Email verified successfully",
+        null,
+        200
+      ),
+      res
+    );
+  };
 
   resendCode = async (req: Request, res: Response) => {
     const { email } = req.body;
@@ -107,6 +106,28 @@ class AuthController {
         ResponseStatus.Sucess,
         "Fetched user information",
         user,
+        200
+      ),
+      res
+    );
+  };
+
+  loginWithGoogle = async (req: Request, res: Response) => {
+    const { code } = req.body;
+    if (!code || typeof code !== "string") {
+      return res.status(400).json({ message: "Missing code" });
+    }
+
+    const userData = await authService.loginWithGoogle(code);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Login success",
+        {
+          accessToken: userData.accessToken,
+          refreshToken: userData.refreshToken,
+          user: userData.user,
+        },
         200
       ),
       res
