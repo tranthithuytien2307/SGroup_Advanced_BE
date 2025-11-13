@@ -248,6 +248,40 @@ class AuthService {
 
     await mailService.sendVerificationEmail(user.email, verifyCode);
   }
+
+  async forgotPassword(email: string): Promise<void> {
+    try {
+      const user = await authModel.getUserByEmail(email);
+      if (!user) throw new BadRequestError("User not found");
+
+      const resetToken = crypto.randomBytes(20).toString("hex");
+      await redisClient.setEx(`reset:${email}`, 900, resetToken);
+
+      const resetLink = `${process.env.BASE_URL}/api/auth/reset-password?email=${email}&token=${resetToken}`;
+      await mailService.sendEmail(email, resetLink);
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error;
+      }
+      throw new InternalServerError("Failed to send reset email");
+    }
+  }
+  async resetPassword(email: string, token: string, newPassword: string): Promise<void>{
+    try{
+      const savedToken = await redisClient.get(`reset:${email}`);
+      if (!savedToken || savedToken !== token) throw new BadRequestError("Invalid or expired token");
+
+      const { hashString } = await hashProvides.generateHash(newPassword);
+      await authModel.updatePasswordByEmail(email, hashString);
+
+      await redisClient.del(`reset:${email}`);
+    } catch( error ){
+      if (error instanceof ErrorResponse){
+        throw error;
+      }
+       throw new InternalServerError("Failed to reset password");
+    }
+  }
 }
 
 export default new AuthService();

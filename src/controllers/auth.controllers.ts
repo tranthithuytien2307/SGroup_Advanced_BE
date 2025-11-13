@@ -133,6 +133,38 @@ class AuthController {
       res
     );
   };
+
+  forgotPassword = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) throw new BadRequestError("Missing email");
+
+    await authService.forgotPassword(email);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Reset link sent successfully",
+        null,
+        200
+      ),
+      res
+    );
+  };
+  resetPassword = async (req: Request, res: Response) => {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword)
+      throw new BadRequestError("Missing email, token or new password");
+
+    await authService.resetPassword(email, token, newPassword);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Password reset successfully",
+        null,
+        200
+      ),
+      res
+    );
+  };
 }
 
 export default new AuthController();

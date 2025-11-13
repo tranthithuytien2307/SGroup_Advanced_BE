@@ -27,6 +27,18 @@ class MailService {
 
     await this.transporter.sendMail(mailOptions);
   }
+  async sendEmail(to: string, resetLink: string) {
+    await this.transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject: "Password Reset Request",
+      html: `
+      <h2>Password Reset Request</h2>
+      <p>Click the button below to reset your password. This link will expire in <b>15 minutes</b>.</p>
+      <a href="${resetLink}" style="display:inline-block;padding:10px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">Reset Password</a>
+      `,
+    });
+  }
 }
 
 export default new MailService();
