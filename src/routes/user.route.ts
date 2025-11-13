@@ -5,6 +5,7 @@ import { authorize } from "../middleware/rbac.middleware";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { validateRequest } from "../utils/http-handler";
 import { UserSchema } from "../schemas/user.schema";
+import upload from "../middleware/upload.middleware";
 
 const router = Router();
 
@@ -45,6 +46,15 @@ router.delete(
   authorize("delete_user"),
   validateRequest(UserSchema.Delete),
   asyncHandler(userController.deleteUser)
+);
+
+router.patch("/user/profile", authMiddleware, userController.updateProfile);
+
+router.patch(
+  "/avatar",
+  authMiddleware,
+  upload.single("avatar"),
+  userController.uploadAvatar
 );
 
 export default router;
