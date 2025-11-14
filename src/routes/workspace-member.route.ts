@@ -8,10 +8,15 @@ import { WorkspaceMemberSchema } from "../schemas/workspace-member.schema";
 const router = Router();
 
 router.post(
-  "/:workspaceId/members",
+  "/:workspaceId/invation",
   authMiddleware,
-  validateRequest(WorkspaceMemberSchema.AddMember),
-  asyncHandler(workspaceMemberController.addMember)
+  validateRequest(WorkspaceMemberSchema.Invite),
+  asyncHandler(workspaceMemberController.inviteMember)
+);
+
+router.get(
+  "/invite/accept",
+  asyncHandler(workspaceMemberController.acceptInvitation)
 );
 
 router.get(

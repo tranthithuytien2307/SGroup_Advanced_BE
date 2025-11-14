@@ -2,11 +2,13 @@ import { AppDataSource } from "../data-source";
 import { Workspace } from "../entities/workspace.entity";
 import { User } from "../entities/user.entity";
 import { WorkspaceMember } from "../entities/workspace-member.entity";
+import { WorkspaceInvitation } from "../entities/workspace-invitations.entity";
 
 class WorkspaceMemberModel {
   private workspaceRepo = AppDataSource.getRepository(Workspace);
   private userRepo = AppDataSource.getRepository(User);
   private memberRepo = AppDataSource.getRepository(WorkspaceMember);
+  private invitationRepo = AppDataSource.getRepository(WorkspaceInvitation);
 
   async findWorkspaceById(id: number): Promise<Workspace | null> {
     try {
@@ -44,6 +46,20 @@ class WorkspaceMemberModel {
     }
   }
 
+  async createUser(email: string, name?: string): Promise<User> {
+    try {
+      const user = this.userRepo.create({
+        email,
+        name: name || email.split("@")[0],
+        password: null,
+      });
+      return await this.userRepo.save(user);
+    } catch (error) {
+      console.error("Error in cteateUser: ", error);
+      throw new Error("Failed to create user");
+    }
+  }
+
   async findMemberByEmail(
     workspaceId: number,
     email: string
@@ -59,6 +75,71 @@ class WorkspaceMemberModel {
     } catch (error) {
       console.error("Error in findMemberByEmail:", error);
       throw new Error("Failed to find member by email");
+    }
+  }
+
+  async createInvitation(
+    email: string,
+    workspace: Workspace,
+    workspace_id: number,
+    status: "pending" | "accepted" | "expired",
+    token: string,
+    invited_by_id: number
+  ): Promise<WorkspaceInvitation> {
+    try {
+      const invitation = this.invitationRepo.create({
+        email,
+        workspace,
+        workspace_id,
+        status,
+        token,
+        invited_by_id,
+      });
+      return await this.invitationRepo.save(invitation);
+    } catch (error) {
+      console.error("Error in create invitation: ", error);
+      throw new Error("Failed to create invitation");
+    }
+  }
+
+  async findInvitationByToken(
+    token: string
+  ): Promise<WorkspaceInvitation | null> {
+    try {
+      return await this.invitationRepo.findOne({
+        where: { token },
+        relations: ["workspace"],
+      });
+    } catch (error) {
+      console.error("Error in findByToken: ", error);
+      throw new Error("Failed to find by token");
+    }
+  }
+
+  async updateInvitationStatus(
+    invitation: WorkspaceInvitation,
+    status: "pending" | "accepted" | "expired"
+  ): Promise<WorkspaceInvitation> {
+    try {
+      invitation.status = status;
+      return await this.invitationRepo.save(invitation);
+    } catch (error) {
+      console.error("Error in updateStatus: ", error);
+      throw new Error("Failed to update status");
+    }
+  }
+
+  async findExistingInvitation(
+    workspaceId: number,
+    email: string
+  ): Promise<WorkspaceInvitation | null> {
+    try {
+      return await this.invitationRepo.findOne({
+        where: { workspace_id: workspaceId, email },
+      });
+    } catch (error) {
+      console.error("Error in findExistingInvatation: ", error);
+      throw new Error("Failed to find exit invitation");
     }
   }
 

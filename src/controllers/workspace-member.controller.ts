@@ -5,26 +5,41 @@ import { ServiceResponse, ResponseStatus } from "../provides/service.response";
 import { handleServiceResponse } from "../utils/http-handler";
 
 class WorkspaceMemberController {
-  addMember = async (req: Request, res: Response) => {
+
+  inviteMember = async (req: Request, res: Response) => {
     const { workspaceId } = req.params;
     const { email, role } = req.body;
+    const inviterId = Number((req as any).user.id);
 
-    if (!workspaceId || !email) {
-      throw new BadRequestError("Missing workspaceId or email");
-    }
-
-    const newMember = await workspaceMemberService.addMember(
+    const invitation = await workspaceMemberService.createInvitation(
       Number(workspaceId),
       email,
-      role || "member"
+      role,
+      inviterId
     );
 
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
-        "Member added successfully",
-        newMember,
-        201
+        "Invitation sent successfully",
+        invitation,
+        200
+      ),
+      res
+    );
+  };
+
+  acceptInvitation = async (req: Request, res: Response) => {
+    const { token } = req.query;
+
+    const result = await workspaceMemberService.acceptInvitation(String(token));
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Invitation accepted",
+        result,
+        200
       ),
       res
     );

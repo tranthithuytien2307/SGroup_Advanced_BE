@@ -39,6 +39,29 @@ class MailService {
       `,
     });
   }
+
+  async sendInvitationEmail(
+    email: string,
+    token: string,
+    workspaceName: string
+  ) {
+    const link = `${process.env.BASE_URL}/api/workspace-member/invite/accept?token=${token}`;
+
+    await this.transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Invitation to join workspace ${workspaceName}`,
+      html: `
+      <h3>Bạn được mời tham gia workspace: <b>${workspaceName}</b></h3>
+      <p>Click vào link bên dưới để chấp nhận:</p>
+      <a href="${link}" target="_blank" style="display:inline-block;padding:10px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">
+        Join Workspace
+      </a>
+      <p>Nếu button không hoạt động, hãy copy link sau vào trình duyệt:</p>
+      <p>${link}</p>
+    `,
+    });
+  }
 }
 
 export default new MailService();

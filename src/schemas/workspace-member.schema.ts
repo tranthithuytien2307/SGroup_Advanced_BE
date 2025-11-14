@@ -11,6 +11,16 @@ export const WorkspaceMemberSchema = {
     }),
   }),
 
+  Invite: z.object({
+    body: z.object({
+      email: z.string().email("Invalid email format"),
+      role: z.enum(["admin", "member", "viewer"]),
+    }),
+    params: z.object({
+      workspaceId: z.coerce.number().positive(),
+    }),
+  }),
+
   UpdateRole: z.object({
     body: z.object({
       role: z.enum(["owner", "admin", "member", "viewer"]),
@@ -27,6 +37,13 @@ export type AddMemberInput = z.infer<
 >["body"];
 export type AddMemberParams = z.infer<
   typeof WorkspaceMemberSchema.AddMember
+>["params"];
+
+export type InviteMemberInput = z.infer<
+  typeof WorkspaceMemberSchema.Invite
+>["body"];
+export type InviteMemberParams = z.infer<
+  typeof WorkspaceMemberSchema.Invite
 >["params"];
 
 export type UpdateRoleInput = z.infer<
