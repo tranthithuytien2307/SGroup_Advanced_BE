@@ -72,7 +72,7 @@ class WorkspaceModel {
   ) {
     const workspace = await this.workspaceRepository.findOne({
       where: { id },
-      relations: ["members"],
+      relations: ["members","members.user"],
     });
     if (!workspace) throw new Error("Workspace not found");
 
@@ -91,7 +91,7 @@ class WorkspaceModel {
   async softDelete(id: number, userId: number) {
     const workspace = await this.workspaceRepository.findOne({
       where: { id },
-      relations: ["members"],
+      relations: ["members", "members.user"],
     });
     if (!workspace) throw new Error("Workspace not found");
 

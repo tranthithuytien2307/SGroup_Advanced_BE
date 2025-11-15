@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import boardService from "../services/board.service";
-import {
-  ServiceResponse,
-  ResponseStatus,
-} from "../provides/service.response";
+import { ServiceResponse, ResponseStatus } from "../provides/service.response";
 import {
   AuthFailureError,
   BadRequestError,
@@ -46,8 +43,8 @@ class BoardController {
   };
 
   create = async (req: Request, res: Response) => {
-    const { name, workspace_id, cover_url } = req.body;
-    const userId = (req as any).user?.id
+    const { name, workspace_id, description, cover_url } = req.body;
+    const userId = (req as any).user?.id;
     if (!name || !workspace_id) {
       throw new BadRequestError("Board name and workspace are required");
     }
@@ -55,7 +52,13 @@ class BoardController {
     if (!userId) {
       throw new AuthFailureError("Unauthorized");
     }
-    const data = await boardService.createBoard(name, workspace_id, cover_url);
+    const data = await boardService.createBoard(
+      name,
+      workspace_id,
+      userId,
+      cover_url,
+      description
+    );
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
@@ -72,8 +75,8 @@ class BoardController {
     if (Number.isNaN(id)) {
       throw new BadRequestError("Invalid board id");
     }
-    const { name, cover_url } = req.body;
-    const data = await boardService.updateBoard(id, name, cover_url);
+    const { name, cover_url, description } = req.body;
+    const data = await boardService.updateBoard(id, name, cover_url, description);
     if (!data) {
       throw new NotFoundError("Board not found");
     }

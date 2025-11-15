@@ -18,6 +18,9 @@ export class Board {
   @Column()
   name!: string;
 
+  @Column({ type: "text", nullable: true })
+  description!: string | null;
+
   @Column({ type: "varchar", nullable: true })
   cover_url!: string | null;
 

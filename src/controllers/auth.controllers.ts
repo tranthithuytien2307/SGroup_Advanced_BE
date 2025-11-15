@@ -1,13 +1,7 @@
 import { Request, Response } from "express";
 import authService from "../services/auth.service";
-import {
-  ServiceResponse,
-  ResponseStatus,
-} from "../provides/service.response";
-import {
-  BadRequestError,
-  ForbiddenError,
-} from "../handler/error.response";
+import { ServiceResponse, ResponseStatus } from "../provides/service.response";
+import { BadRequestError, ForbiddenError } from "../handler/error.response";
 import { handleServiceResponse } from "../utils/http-handler";
 
 class AuthController {
@@ -56,28 +50,44 @@ class AuthController {
     const { email, password, name } = req.body;
     const user = await authService.registerUser(email, password, name);
     return handleServiceResponse(
-      new ServiceResponse(
-        ResponseStatus.Sucess,
-        "Register success",
-        user,
-        201
-      ),
+      new ServiceResponse(ResponseStatus.Sucess, "Register success", user, 201),
       res
     );
   };
 
   verifyEmail = async (req: Request, res: Response) => {
-    const { token } = req.query;
+    const email = req.query.email as string;
+    const code = req.query.code as string;
 
-    if (!token) {
-      throw new BadRequestError("Missing token");
+    if (!email || !code) {
+      throw new BadRequestError("Missing email or code");
     }
 
-    await authService.verifyEmail(token as string);
+    await authService.verifyEmail(email, code);
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Email verified successfully",
+        null,
+        200
+      ),
+      res
+    );
+  };
+
+  resendCode = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) {
+      throw new BadRequestError("Missing email");
+    }
+
+    await authService.resendVerificationCode(email);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Verification code resent",
         null,
         200
       ),
@@ -96,6 +106,60 @@ class AuthController {
         ResponseStatus.Sucess,
         "Fetched user information",
         user,
+        200
+      ),
+      res
+    );
+  };
+
+  loginWithGoogle = async (req: Request, res: Response) => {
+    const { code } = req.body;
+    if (!code || typeof code !== "string") {
+      return res.status(400).json({ message: "Missing code" });
+    }
+
+    const userData = await authService.loginWithGoogle(code);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Login success",
+        {
+          accessToken: userData.accessToken,
+          refreshToken: userData.refreshToken,
+          user: userData.user,
+        },
+        200
+      ),
+      res
+    );
+  };
+
+  forgotPassword = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) throw new BadRequestError("Missing email");
+
+    await authService.forgotPassword(email);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Reset link sent successfully",
+        null,
+        200
+      ),
+      res
+    );
+  };
+  resetPassword = async (req: Request, res: Response) => {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword)
+      throw new BadRequestError("Missing email, token or new password");
+
+    await authService.resetPassword(email, token, newPassword);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Password reset successfully",
+        null,
         200
       ),
       res

@@ -43,11 +43,18 @@ class BoardService {
   async createBoard(
     name: string,
     workspace_id: number,
-    create_by_id: number,
+    created_by_id: number,
     cover_url?: string,
+    description?: string | null
   ): Promise<Board> {
     try {
-      return await boardModel.createBoard(name, workspace_id, create_by_id, cover_url);
+      return await boardModel.createBoard(
+        name,
+        workspace_id,
+        created_by_id,
+        cover_url,
+        description
+      );
     } catch (error) {
       throw new InternalServerError("Failed to create board");
     }
@@ -56,10 +63,11 @@ class BoardService {
   async updateBoard(
     id: number,
     name: string,
-    cover_url?: string
+    cover_url?: string,
+    description?: string
   ): Promise<Board> {
     try {
-      return await boardModel.updateBoard(id, name, cover_url);
+      return await boardModel.updateBoard(id, name, cover_url, description);
     } catch (error) {
       if (error instanceof ErrorResponse) {
         throw error;

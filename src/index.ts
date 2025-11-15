@@ -6,6 +6,8 @@ import cors from "cors";
 import notFound from "./middleware/notFound";
 import { errorHandler } from "./handler/error-handler";
 
+import { connectRedis } from "./redisClient"; 
+
 const app = express();
 
 app.use(express.json());
@@ -20,11 +22,15 @@ app.use(
 );
 app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 
-AppDataSource.initialize()
+connectRedis()
+  .then(() => {
+    console.log("Redis connected successfully");
+
+    return AppDataSource.initialize();
+  })
   .then(() => {
     console.log("Database connected successfully");
 
-    // http://localhost:3000 -> http://localhost:3000/api
     app.use("/api", router);
     app.use(notFound);
     app.use(errorHandler);
@@ -34,4 +40,4 @@ AppDataSource.initialize()
       console.log("Swagger docs at http://localhost:3000/api-docs");
     });
   })
-  .catch((err) => console.error("DB connection error:", err));
+  .catch((err) => console.error("Error initializing services:", err));

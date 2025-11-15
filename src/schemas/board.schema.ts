@@ -10,10 +10,16 @@ export const BoardSchema = {
   Create: z.object({
     body: z.object({
       name: z.string().min(3, "Board name must be at least 3 characters"),
-      workspace_id: z.number().or(
-        z.string().regex(/^\d+$/, "Workspace ID must be a number").transform(Number)
-      ),
+      workspace_id: z
+        .number()
+        .or(
+          z
+            .string()
+            .regex(/^\d+$/, "Workspace ID must be a number")
+            .transform(Number)
+        ),
       cover_url: z.string().url("Invalid cover URL").optional(),
+      description: z.string().optional().nullable(),
     }),
   }),
 
@@ -25,6 +31,7 @@ export const BoardSchema = {
       .object({
         name: z.string().min(3).optional(),
         cover_url: z.string().url().optional(),
+        description: z.string().optional().nullable(),
       })
       .refine((b) => Object.keys(b).length > 0, {
         message: "At least one field must be provided",

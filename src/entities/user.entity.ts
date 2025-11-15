@@ -9,6 +9,7 @@ import {
 import { Workspace } from "./workspace.entity";
 import { WorkspaceMember } from "./workspace-member.entity";
 import { Board } from "./board.entity";
+import { WorkspaceInvitation } from "./workspace-invitations.entity";
 
 @Entity("users")
 export class User {
@@ -67,4 +68,7 @@ export class User {
 
   @UpdateDateColumn({ type: "timestamp" })
   updated_at!: Date;
+
+  @OneToMany(() => WorkspaceInvitation, (inv) => inv.invited_by)
+  sentInvitations!: WorkspaceInvitation[];
 }

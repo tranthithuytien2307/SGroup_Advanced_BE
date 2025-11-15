@@ -29,28 +29,32 @@ class BoardModel {
     name: string,
     workspace_id: number,
     created_by_id: number,
-    cover_url?: string
+    cover_url?: string,
+    description?: string | null
   ): Promise<Board> {
     const newBoard = this.boardRepository.create({
       name,
       workspace_id,
       created_by_id,
       cover_url: cover_url || null,
+      description: description || null,
     });
-    
+
     return await this.boardRepository.save(newBoard);
   }
 
   async updateBoard(
     id: number,
     name: string,
-    cover_url?: string
+    cover_url?: string,
+    description?: string
   ): Promise<Board> {
     const board = await this.boardRepository.findOneBy({ id });
     if (!board) throw new Error("Board not found");
 
     board.name = name || board.name;
     board.cover_url = cover_url || board.cover_url;
+    board.description = description || board.description;
 
     return await this.boardRepository.save(board);
   }
