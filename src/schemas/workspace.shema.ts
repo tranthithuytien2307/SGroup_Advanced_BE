@@ -11,7 +11,6 @@ export const WorkspaceSchema = {
     body: z.object({
       name: z.string().min(3, "Name must be at least 3 characters"),
       description: z.string().nullable().optional(),
-      is_active: z.boolean().optional(),
     }),
   }),
 

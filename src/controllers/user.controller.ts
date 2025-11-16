@@ -93,7 +93,7 @@ class UserController {
     const userId = Number((req as any).user.id);
     console.log("userId: ", typeof userId);
     if (isNaN(userId))
-      throw new BadRequestError("Invalid input: User ID must be a number hi");
+      throw new BadRequestError("Invalid input: User ID must be a number");
     const updatedUser = await UserService.updateProfile(userId, req.body);
     return handleServiceResponse(
       new ServiceResponse(
