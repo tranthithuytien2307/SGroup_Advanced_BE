@@ -49,4 +49,5 @@ export class Board {
 
   @UpdateDateColumn({ type: "timestamp" })
   updated_at!: Date;
+  members: any;
 }
