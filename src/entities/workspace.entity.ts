@@ -30,6 +30,13 @@ export class Workspace {
   @Column({ default: true })
   is_active!: boolean;
 
+  @Column({
+    type: "varchar",
+    enum: ["private", "workspace", "public"],
+    default: "private"
+  })
+  visibility!: "private" | "workspace" | "public";
+
   @ManyToOne(() => User, (user) => user.ownedWorkspaces, {
     onDelete: "CASCADE",
   })

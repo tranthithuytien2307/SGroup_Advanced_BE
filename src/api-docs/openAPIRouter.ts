@@ -102,7 +102,7 @@ const swaggerDoc = {
       },
     },
     "/api/user/profile": {
-      patch: {
+      put: {
         summary: "Update current user profile",
         tags: ["Users"],
         security: [{ BearerAuth: [] }],
@@ -127,7 +127,7 @@ const swaggerDoc = {
       },
     },
     "/api/avatar": {
-      patch: {
+      put: {
         summary: "Upload user avatar",
         tags: ["Users"],
         security: [{ BearerAuth: [] }],

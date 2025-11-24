@@ -1,12 +1,16 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import * as dotenv from "dotenv";
-dotenv.config();
 import { User } from "./entities/user.entity";
 import { Workspace } from "./entities/workspace.entity";
 import { Board } from "./entities/board.entity";
 import { WorkspaceMember } from "./entities/workspace-member.entity";
 import { WorkspaceInvitation } from "./entities/workspace-invitations.entity";
+import { BoardMember } from "./entities/board-member.entity";
+import { Role } from "./entities/role.entity";
+import { Permission } from "./entities/permission.entity";
+import { RolePermission } from "./entities/role-permission.entity";
+dotenv.config();
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -17,5 +21,5 @@ export const AppDataSource = new DataSource({
   database: "mydb",
   synchronize: true,
   logging: true,
-  entities: [User, Workspace, Board, WorkspaceMember, WorkspaceInvitation],
+  entities: [User, Workspace, Board, WorkspaceMember, BoardMember, WorkspaceInvitation, Role, Permission, RolePermission],
 });

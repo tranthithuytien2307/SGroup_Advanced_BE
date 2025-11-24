@@ -89,11 +89,9 @@ class UserController {
   }
 
   static async updateProfile(req: Request, res: Response) {
-    console.log("eee");
-    const userId = Number((req as any).user.id);
-    console.log("userId: ", typeof userId);
-    if (isNaN(userId))
-      throw new BadRequestError("Invalid input: User ID must be a number");
+    const userId = (req as any).user?.id;
+    if (!userId)
+      throw new BadRequestError("User ID is required for profile update");
     const updatedUser = await UserService.updateProfile(userId, req.body);
     return handleServiceResponse(
       new ServiceResponse(
@@ -107,7 +105,7 @@ class UserController {
   }
 
   static async uploadAvatar(req: Request, res: Response) {
-    const userId = (req as any).user.id;
+    const userId = (req as any).user?.id;
     const filePath = req.file?.path;
     if (!filePath) {
       return handleServiceResponse(
