@@ -36,7 +36,7 @@ class WorkspaceController {
 
   createWorkspace = async (req: Request, res: Response) => {
     const { name, description } = req.body;
-    const userId = (req as any).user?.id;
+    const userId = Number((req as any).user.id);
 
     if (!name) {
       throw new BadRequestError("Workspace name is required");

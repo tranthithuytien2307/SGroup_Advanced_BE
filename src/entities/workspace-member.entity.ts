@@ -8,6 +8,7 @@ import {
 import { User } from "./user.entity";
 import { Workspace } from "./workspace.entity";
 
+export type WorkspaceRole = "owner" | "admin" | "member" | "viewer";
 @Entity("workspace_members")
 export class WorkspaceMember {
   @PrimaryGeneratedColumn()
@@ -21,6 +22,10 @@ export class WorkspaceMember {
   @JoinColumn({ name: "workspace_id" })
   workspace!: Workspace;
 
-  @Column({ default: "member" })
-  role!: "owner" | "admin" | "member" | "viewer";
+  @Column({ 
+    type: "enum", 
+    enum: ["owner", "admin", "member", "viewer"], 
+    default: "member" 
+  })
+  role!: WorkspaceRole;
 }

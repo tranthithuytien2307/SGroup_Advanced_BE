@@ -11,6 +11,7 @@ import {
 import { User } from "./user.entity";
 import { Board } from "./board.entity";
 import { WorkspaceMember } from "./workspace-member.entity";
+import { WorkspaceInvitation } from "./workspace-invitations.entity";
 
 @Entity("workspaces")
 export class Workspace {
@@ -29,7 +30,16 @@ export class Workspace {
   @Column({ default: true })
   is_active!: boolean;
 
-  @ManyToOne(() => User, (user) => user.ownedWorkspaces, { onDelete: "CASCADE" })
+  @Column({
+    type: "varchar",
+    enum: ["private", "workspace", "public"],
+    default: "private"
+  })
+  visibility!: "private" | "workspace" | "public";
+
+  @ManyToOne(() => User, (user) => user.ownedWorkspaces, {
+    onDelete: "CASCADE",
+  })
   @JoinColumn({ name: "owner_id" })
   owner!: User;
 
@@ -47,4 +57,7 @@ export class Workspace {
 
   @UpdateDateColumn({ type: "timestamp" })
   updated_at!: Date;
+
+  @OneToMany(() => WorkspaceInvitation, (inv) => inv.workspace)
+  invitations!: WorkspaceInvitation[];
 }

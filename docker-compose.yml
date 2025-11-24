@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    container_name: node-backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - EMAIL_USER=your-email@gmail.com
+      - EMAIL_PASS=your-app-password
+    volumes:
+      - ./src:/app/src
+    working_dir: /app/src
+    command: ts-node index.ts
+
+  redis:
+    image: redis:7
+    container_name: redis-server
+    ports:
+      - "6379:6379"

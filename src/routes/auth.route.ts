@@ -14,6 +14,12 @@ router.post(
 );
 
 router.post(
+  "/google/login",
+  validateRequest(AuthSchema.LoginWithGoogle),
+  authController.loginWithGoogle
+);
+
+router.post(
   "/register",
   validateRequest(AuthSchema.Register),
   asyncHandler(authController.registerUser)
@@ -29,6 +35,24 @@ router.post(
   "/refresh",
   validateRequest(AuthSchema.RefreshToken),
   asyncHandler(authController.refreshToken)
+);
+
+router.post(
+  "/forgot-password",
+  validateRequest(AuthSchema.ForgotPassword),
+  authController.forgotPassword
+);
+
+router.post(
+  "/reset-password",
+  validateRequest(AuthSchema.ResetPassword),
+  authController.resetPassword
+);
+
+router.post(
+  "/resend-code",
+  validateRequest(AuthSchema.ResendVerificationCode),
+  asyncHandler(authController.resendCode)
 );
 
 router.get(

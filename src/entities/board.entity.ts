@@ -18,8 +18,27 @@ export class Board {
   @Column()
   name!: string;
 
+  @Column({ type: "text", nullable: true })
+  description!: string | null;
+
   @Column({ type: "varchar", nullable: true })
-  cover_url!: string | null;
+  cover_url!: string | null; // Background image URL
+
+  @Column({ type: "varchar", nullable: true })
+  theme!: string | null; // Background color
+
+  @Column({ default: false })
+  is_archived!: boolean;
+
+  @Column({ type: "timestamp", nullable: true })
+  archived_at!: Date | null;
+
+  @Column({
+    type: "enum",
+    enum: ["private", "workspace", "public"],
+    default: "private",
+  })
+  visibility!: "private" | "workspace" | "public";
 
   @ManyToOne(() => Workspace, (workspace) => workspace.boards, {
     onDelete: "CASCADE",
@@ -46,4 +65,5 @@ export class Board {
 
   @UpdateDateColumn({ type: "timestamp" })
   updated_at!: Date;
+  members: any;
 }

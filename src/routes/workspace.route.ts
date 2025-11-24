@@ -4,37 +4,46 @@ import workspaceController from "../controllers/workspace.controllers";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { validateRequest } from "../utils/http-handler";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { authorizeWorkspace } from '../middleware/rbac-workspace.middleware';
 
 const router = express.Router();
 
-router.get("/", authMiddleware, asyncHandler(workspaceController.getAllWorkspace));
+router.get("/", 
+  authMiddleware, 
+  asyncHandler(workspaceController.getAllWorkspace),
+  authorizeWorkspace(["owner", "admin", "member", "viewer"])
+);
 
 router.get(
   "/:id",
   authMiddleware,
   validateRequest(WorkspaceSchema.GetById),
-  asyncHandler(workspaceController.getWorkspaceById)
+  asyncHandler(workspaceController.getWorkspaceById),
+  authorizeWorkspace(["owner", "admin", "member", "viewer"])
 );
 
 router.post(
   "/",
   authMiddleware,
   validateRequest(WorkspaceSchema.Create),
-  asyncHandler(workspaceController.createWorkspace)
+  asyncHandler(workspaceController.createWorkspace),
+  authorizeWorkspace(["owner", "admin", "member"])
 );
 
 router.put(
   "/:id",
   authMiddleware,
   validateRequest(WorkspaceSchema.Update),
-  asyncHandler(workspaceController.updateWorkspace)
+  asyncHandler(workspaceController.updateWorkspace),
+  authorizeWorkspace(["owner", "admin", "member"])
 );
 
 router.delete(
   "/:id",
   authMiddleware,
   validateRequest(WorkspaceSchema.Delete),
-  asyncHandler(workspaceController.deleteWorkspace)
+  asyncHandler(workspaceController.deleteWorkspace),
+  authorizeWorkspace(["owner", "admin"])
 );
 
 export default router;
