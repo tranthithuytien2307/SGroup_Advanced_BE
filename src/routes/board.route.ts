@@ -5,6 +5,7 @@ import { validateRequest } from "../utils/http-handler";
 import { BoardSchema } from "../schemas/board.schema";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { authorizeBoard } from "../middleware/rbac-board.middleware";
+import { authorizeWorkspace } from "../middleware/rbac-workspace.middleware";
 
 const router = Router();
 
@@ -14,40 +15,40 @@ router.get(
   "/:id",
   authMiddleware,
   validateRequest(BoardSchema.GetById),
-  asyncHandler(boardController.getById),
-  authorizeBoard(["admin", "member", "viewer"])
+  authorizeBoard(["admin", "member", "viewer"]),
+  asyncHandler(boardController.getById)
 );
 
 router.post(
   "/",
   authMiddleware,
   validateRequest(BoardSchema.Create),
-  asyncHandler(boardController.create),
-  authorizeBoard(["admin", "member"])
+  authorizeWorkspace(["owner", "admin", "member"]),
+  asyncHandler(boardController.create)
 );
 
 router.put(
   "/:id",
   authMiddleware,
   validateRequest(BoardSchema.Update),
-  asyncHandler(boardController.update),
-  authorizeBoard(["admin", "member"])
+  authorizeBoard(["admin", "member"]),
+  asyncHandler(boardController.update)
 );
 
 router.delete(
   "/:id",
   authMiddleware,
   validateRequest(BoardSchema.Delete),
-  asyncHandler(boardController.delete),
-  authorizeBoard(["admin"])
+  authorizeBoard(["admin"]),
+  asyncHandler(boardController.delete)
 );
 
 router.get(
   "/workspace/:workspace_id",
   authMiddleware,
   validateRequest(BoardSchema.GetByWorkspace),
-  asyncHandler(boardController.getByWorkspaceId),
-  authorizeBoard(["admin", "member", "viewer"])
+  authorizeWorkspace(["owner", "admin", "member", "viewer"]),
+  asyncHandler(boardController.getByWorkspaceId)
 );
 
 export default router;
