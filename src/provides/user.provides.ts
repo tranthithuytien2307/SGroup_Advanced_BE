@@ -1,11 +1,13 @@
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import * as dotenv from "dotenv";
+import { Role } from "../entities/role.entity";
 dotenv.config();
 
 interface UserPayload {
-  id: number | string;
-  role: string;
+  id: number;
+  role: Role;
   email: string;
+  role_id: number;
 }
 
 function getEnv(name: string): string {
@@ -24,6 +26,7 @@ export const userProvides = {
       id: user.id,
       role: user.role,
       email: user.email,
+      role_id: user.role_id,
     } as Record<string, unknown>;
 
     const options: SignOptions = {
@@ -42,6 +45,7 @@ export const userProvides = {
     const payload = {
       id: user.id,
       role: user.role,
+      role_id: user.role_id,
     } as Record<string, unknown>;
 
     const options: SignOptions = {

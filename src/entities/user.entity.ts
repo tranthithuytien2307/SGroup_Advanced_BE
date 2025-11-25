@@ -3,6 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
@@ -10,6 +12,7 @@ import { Workspace } from "./workspace.entity";
 import { WorkspaceMember } from "./workspace-member.entity";
 import { Board } from "./board.entity";
 import { WorkspaceInvitation } from "./workspace-invitations.entity";
+import { Role } from "./role.entity";
 
 @Entity("users")
 export class User {
@@ -25,8 +28,15 @@ export class User {
   @Column({ type: "varchar", nullable: true })
   password!: string | null; // OAuth user can have null password
 
-  @Column({ default: "user" })
-  role!: string;
+  // @Column({ default: "user" })
+  // role!: string;
+
+  @ManyToOne(() => Role)
+  @JoinColumn({ name: "role_id" })
+  role!: Role;
+
+  @Column()
+  role_id!: number;
 
   @Column({ default: false })
   isVerified!: boolean;

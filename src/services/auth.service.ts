@@ -46,12 +46,14 @@ class AuthService {
         id: user.id,
         role: user.role,
         email: user.email,
+        role_id: user.role_id,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
         role: user.role,
         email: user.email,
+        role_id: user.role_id,
       });
 
       user.refreshToken = refreshToken;
@@ -114,12 +116,14 @@ class AuthService {
         id: user.id,
         role: user.role,
         email: user.email,
+        role_id: user.role_id,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
         role: user.role,
         email: user.email,
+        role_id: user.role_id,
       });
 
       await authModel.updateRefreshToken(user.id, refreshToken);
@@ -209,6 +213,7 @@ class AuthService {
         id: user.id,
         role: user.role,
         email: user.email,
+        role_id: user.role_id,
       });
 
       return { accessToken };
@@ -266,20 +271,25 @@ class AuthService {
       throw new InternalServerError("Failed to send reset email");
     }
   }
-  async resetPassword(email: string, token: string, newPassword: string): Promise<void>{
-    try{
+  async resetPassword(
+    email: string,
+    token: string,
+    newPassword: string
+  ): Promise<void> {
+    try {
       const savedToken = await redisClient.get(`reset:${email}`);
-      if (!savedToken || savedToken !== token) throw new BadRequestError("Invalid or expired token");
+      if (!savedToken || savedToken !== token)
+        throw new BadRequestError("Invalid or expired token");
 
       const { hashString } = await hashProvides.generateHash(newPassword);
       await authModel.updatePasswordByEmail(email, hashString);
 
       await redisClient.del(`reset:${email}`);
-    } catch( error ){
-      if (error instanceof ErrorResponse){
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
         throw error;
       }
-       throw new InternalServerError("Failed to reset password");
+      throw new InternalServerError("Failed to reset password");
     }
   }
 }
