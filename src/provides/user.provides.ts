@@ -3,8 +3,8 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 interface UserPayload {
-  id: number | string;
-  role: string;
+  id: number;
+  roleId: number;
   email: string;
 }
 
@@ -22,7 +22,7 @@ export const userProvides = {
 
     const payload = {
       id: user.id,
-      role: user.role,
+      roleId: user.roleId,
       email: user.email,
     } as Record<string, unknown>;
 
@@ -41,7 +41,7 @@ export const userProvides = {
 
     const payload = {
       id: user.id,
-      role: user.role,
+      roleId: user.roleId,
     } as Record<string, unknown>;
 
     const options: SignOptions = {

@@ -21,7 +21,7 @@ class UserModel {
           "id",
           "name",
           "email",
-          "role",
+          "roleId",
           "isVerified",
           "avatar_url",
           "provider",

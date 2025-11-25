@@ -5,11 +5,14 @@ import {
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from "typeorm";
 import { Workspace } from "./workspace.entity";
 import { WorkspaceMember } from "./workspace-member.entity";
 import { Board } from "./board.entity";
 import { WorkspaceInvitation } from "./workspace-invitations.entity";
+import { Role } from "./role.entity";
 
 @Entity("users")
 export class User {
@@ -24,6 +27,10 @@ export class User {
 
   @Column({ type: "varchar", nullable: true })
   password!: string | null; // OAuth user can have null password
+
+  @ManyToOne(() => Role)
+  @JoinColumn({ name: "roleId" })
+  role!: Role;
 
   @Column({ type: "int" })
   roleId!: number;

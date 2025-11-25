@@ -44,13 +44,13 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        role: user.role,
+        roleId: user.roleId,
         email: user.email,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
-        role: user.role,
+        roleId: user.roleId,
         email: user.email,
       });
 
@@ -112,13 +112,13 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        role: user.role,
+        roleId: user.roleId,
         email: user.email,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
-        role: user.role,
+        roleId: user.roleId,
         email: user.email,
       });
 
@@ -207,7 +207,7 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        role: user.role,
+        roleId: user.roleId,
         email: user.email,
       });
 
