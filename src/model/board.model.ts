@@ -1,8 +1,10 @@
 import { AppDataSource } from "../data-source";
 import { Board } from "../entities/board.entity";
+import { BoardMember } from "../entities/board-member.entity";
 
 class BoardModel {
   private boardRepository = AppDataSource.getRepository(Board);
+  private boardMemberRepository = AppDataSource.getRepository(BoardMember);
 
   async getAll(): Promise<Board[]> {
     return await this.boardRepository.find({
@@ -40,21 +42,39 @@ class BoardModel {
       description: description || null,
     });
 
-    return await this.boardRepository.save(newBoard);
+    const saved = await this.boardRepository.save(newBoard);
+
+    const member = this.boardMemberRepository.create({
+      board: { id: saved.id },
+      user: { id: created_by_id },
+      role: "admin",
+    });
+    await this.boardMemberRepository.save(member);
+    
+    return saved;
   }
 
   async updateBoard(
     id: number,
-    name: string,
+    name?: string,
     cover_url?: string,
-    description?: string
+    description?: string | null,
+    theme?: string | null,
+    visibility?: "private" | "workspace" | "public",
+    is_archived?: boolean
   ): Promise<Board> {
     const board = await this.boardRepository.findOneBy({ id });
     if (!board) throw new Error("Board not found");
 
-    board.name = name || board.name;
-    board.cover_url = cover_url || board.cover_url;
-    board.description = description || board.description;
+    if (name !== undefined) board.name = name;
+    if (cover_url !== undefined) board.cover_url = cover_url;
+    if (description !== undefined) board.description = description;
+    if (theme !== undefined) board.theme = theme;
+    if (visibility !== undefined) board.visibility = visibility;
+    if (is_archived !== undefined) {
+      board.is_archived = is_archived;
+      board.archived_at = is_archived ? new Date() : null;
+    }
 
     return await this.boardRepository.save(board);
   }

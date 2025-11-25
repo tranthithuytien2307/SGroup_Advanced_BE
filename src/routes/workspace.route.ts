@@ -15,7 +15,7 @@ router.get("/",
 );
 
 router.get(
-  "/:id",
+  "/:workspace_id",
   authMiddleware,
   validateRequest(WorkspaceSchema.GetById),
   asyncHandler(workspaceController.getWorkspaceById),
@@ -31,7 +31,7 @@ router.post(
 );
 
 router.put(
-  "/:id",
+  "/:workspace_id",
   authMiddleware,
   validateRequest(WorkspaceSchema.Update),
   asyncHandler(workspaceController.updateWorkspace),
@@ -39,7 +39,7 @@ router.put(
 );
 
 router.delete(
-  "/:id",
+  "/:workspace_id",
   authMiddleware,
   validateRequest(WorkspaceSchema.Delete),
   asyncHandler(workspaceController.deleteWorkspace),

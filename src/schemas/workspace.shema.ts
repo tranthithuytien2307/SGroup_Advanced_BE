@@ -3,7 +3,7 @@ import { z } from "zod";
 export const WorkspaceSchema = {
   GetById: z.object({
     params: z.object({
-      id: z.string().regex(/^\d+$/, "Workspace ID must be a number"),
+      workspace_id: z.string().regex(/^\d+$/, "Workspace ID must be a number"),
     }),
   }),
 
@@ -16,7 +16,7 @@ export const WorkspaceSchema = {
 
   Update: z.object({
     params: z.object({
-      id: z.string().regex(/^\d+$/, "Workspace ID must be a number"),
+      workspace_id: z.string().regex(/^\d+$/, "Workspace ID must be a number"),
     }),
     body: z
       .object({
@@ -31,7 +31,7 @@ export const WorkspaceSchema = {
 
   Delete: z.object({
     params: z.object({
-      id: z.string().regex(/^\d+$/, "Workspace ID must be a number"),
+      workspace_id: z.string().regex(/^\d+$/, "Workspace ID must be a number"),
     }),
   }),
 };

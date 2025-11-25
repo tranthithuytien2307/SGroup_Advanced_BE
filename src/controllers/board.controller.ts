@@ -23,9 +23,9 @@ class BoardController {
   };
 
   getById = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
-      throw new BadRequestError("Invalid board id");
+      throw new BadRequestError("Invalid Board Id");
     }
     const data = await boardService.getById(id);
     if (!data) {
@@ -71,12 +71,27 @@ class BoardController {
   };
 
   update = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
-      throw new BadRequestError("Invalid board id");
+      throw new BadRequestError("Invalid Board Id");
     }
-    const { name, cover_url, description } = req.body;
-    const data = await boardService.updateBoard(id, name, cover_url, description);
+    const {
+      name,
+      cover_url,
+      description,
+      theme,
+      visibility,
+      is_archived,
+    } = req.body;
+    const data = await boardService.updateBoard(
+      id,
+      name,
+      cover_url,
+      description,
+      theme,
+      visibility,
+      is_archived
+    );
     if (!data) {
       throw new NotFoundError("Board not found");
     }
@@ -92,9 +107,9 @@ class BoardController {
   };
 
   delete = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
-      throw new BadRequestError("Invalid board id");
+      throw new BadRequestError("Invalid Board Id");
     }
     await boardService.deleteBoard(id);
     return handleServiceResponse(
@@ -111,7 +126,7 @@ class BoardController {
   getByWorkspaceId = async (req: Request, res: Response) => {
     const workspaceId = parseInt(req.params.workspace_id, 10);
     if (Number.isNaN(workspaceId)) {
-      throw new BadRequestError("Invalid workspace id");
+      throw new BadRequestError("Invalid Workspace Id");
     }
     const data = await boardService.getBoardsByWorkspaceId(workspaceId);
     if (!data || data.length === 0) {

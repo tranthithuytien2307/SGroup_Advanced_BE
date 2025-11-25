@@ -62,12 +62,23 @@ class BoardService {
 
   async updateBoard(
     id: number,
-    name: string,
+    name?: string,
     cover_url?: string,
-    description?: string
+    description?: string | null,
+    theme?: string | null,
+    visibility?: "private" | "workspace" | "public",
+    is_archived?: boolean
   ): Promise<Board> {
     try {
-      return await boardModel.updateBoard(id, name, cover_url, description);
+      return await boardModel.updateBoard(
+        id,
+        name,
+        cover_url,
+        description,
+        theme,
+        visibility,
+        is_archived
+      );
     } catch (error) {
       if (error instanceof ErrorResponse) {
         throw error;

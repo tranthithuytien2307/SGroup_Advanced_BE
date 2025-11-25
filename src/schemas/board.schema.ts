@@ -3,7 +3,7 @@ import { z } from "zod";
 export const BoardSchema = {
   GetById: z.object({
     params: z.object({
-      id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
     }),
   }),
 
@@ -25,13 +25,16 @@ export const BoardSchema = {
 
   Update: z.object({
     params: z.object({
-      id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
     }),
     body: z
       .object({
         name: z.string().min(3).optional(),
         cover_url: z.string().url().optional(),
         description: z.string().optional().nullable(),
+        theme: z.string().optional().nullable(),
+        visibility: z.enum(["private", "workspace", "public"]).optional(),
+        is_archived: z.boolean().optional(),
       })
       .refine((b) => Object.keys(b).length > 0, {
         message: "At least one field must be provided",
@@ -40,7 +43,7 @@ export const BoardSchema = {
 
   Delete: z.object({
     params: z.object({
-      id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
     }),
   }),
 
