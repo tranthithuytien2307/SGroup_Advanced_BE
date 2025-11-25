@@ -25,8 +25,8 @@ export class User {
   @Column({ type: "varchar", nullable: true })
   password!: string | null; // OAuth user can have null password
 
-  @Column({ default: "user" })
-  role!: string;
+  @Column({ type: "int" })
+  roleId!: number;
 
   @Column({ default: false })
   isVerified!: boolean;
