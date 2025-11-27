@@ -95,7 +95,7 @@ class WorkspaceModel {
     });
     if (!workspace) throw new Error("Workspace not found");
 
-    const member = workspace.members.find((m) => m.user.id === userId);
+    const member = workspace.members.find((m) => m.user.id === userId);// coi lai thu 
     if (!member || member.role !== "owner") {
       throw new Error("Permission denied");
     }

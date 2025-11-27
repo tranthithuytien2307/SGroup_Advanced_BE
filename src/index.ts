@@ -1,19 +1,18 @@
 import express from "express";
 import { AppDataSource } from "./data-source";
 import router from "./routes/app.route";
-import { setupSwagger } from "./api-docs/openAPIRouter";
+import { buildOpenAPIRouter } from "./api-docs/openAPIRouter";
 import cors from "cors";
 import notFound from "./middleware/notFound";
 import { errorHandler } from "./handler/error-handler";
 
-import { connectRedis } from "./redisClient"; 
+import { connectRedis } from "./redisClient";
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-setupSwagger(app);
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -30,7 +29,7 @@ connectRedis()
   })
   .then(() => {
     console.log("Database connected successfully");
-
+    app.use("/api-docs", buildOpenAPIRouter());
     app.use("/api", router);
     app.use(notFound);
     app.use(errorHandler);

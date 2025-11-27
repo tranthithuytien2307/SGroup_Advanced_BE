@@ -4,15 +4,27 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { authorization } from "../middleware/rbac.middleware";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { validateRequest } from "../utils/http-handler";
-import { UserSchema } from "../schemas/user.schema";
 import upload from "../middleware/upload.middleware";
+import { UserSchema } from "../schemas/user.schema";
+import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
+import { z } from "zod";
+import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
 
+export const userRegistry = new OpenAPIRegistry();
 const router = Router();
 
 // ===============================
 // ADMIN & STAFF: View all users
 // Permission: view_all
 // ===============================
+userRegistry.registerPath({
+  method: "get",
+  path: "/api/users",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.null(), "Get all users"),
+});
+
 router.get(
   "/users",
   authMiddleware,
@@ -25,6 +37,15 @@ router.get(
 // - ADMIN, STAFF: view all users (view_all)
 // - USER: view self only (view_self)
 // ===============================
+userRegistry.registerPath({
+  method: "get",
+  path: "/api/user/:id",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  request: { params: UserSchema.GetById },
+  responses: createApiResponse(z.null(), "Get user by ID"),
+});
+
 router.get(
   "/user/:id",
   authMiddleware,
@@ -38,6 +59,17 @@ router.get(
 // ADMIN: Create new user
 // Permission: create_user
 // ===============================
+userRegistry.registerPath({
+  method: "post",
+  path: "/api/user",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: { content: { "application/json": { schema: UserSchema.Create } } },
+  },
+  responses: createApiResponse(z.null(), "Create new user"),
+});
+
 router.post(
   "/user",
   authMiddleware,
@@ -52,6 +84,18 @@ router.post(
 // - STAFF: update_user
 // - USER: update_self
 // ===============================
+userRegistry.registerPath({
+  method: "put",
+  path: "/api/user/:id",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: { content: { "application/json": { schema: UserSchema.Update } } },
+    params: UserSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Update user"),
+});
+
 router.put(
   "/user/:id",
   authMiddleware,
@@ -65,6 +109,15 @@ router.put(
 // ADMIN: Delete user
 // Permission: delete_user
 // ===============================
+userRegistry.registerPath({
+  method: "delete",
+  path: "/api/user/:id",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  request: { params: UserSchema.Delete },
+  responses: createApiResponse(z.null(), "Delete user"),
+});
+
 router.delete(
   "/user/:id",
   authMiddleware,
@@ -77,6 +130,14 @@ router.delete(
 // USER: Update own profile
 // Permission: update_self
 // ===============================
+userRegistry.registerPath({
+  method: "put",
+  path: "/api/user/profile",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.null(), "Update user profile"),
+});
+
 router.put(
   "/user/profile",
   authMiddleware,
@@ -88,6 +149,14 @@ router.put(
 // USER: Update avatar
 // Permission: update_self
 // ===============================
+userRegistry.registerPath({
+  method: "put",
+  path: "/api/user/avatar",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.null(), "Update user avatar"),
+});
+
 router.put(
   "/user/avatar",
   authMiddleware,
