@@ -1,82 +1,57 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/user.entity";
 
+/**
+ * UserModel - Pure Data Access Layer
+ * Only handles database operations, returns data or null
+ * No business logic, no validation, no error throwing
+ */
 class UserModel {
   private userRepository = AppDataSource.getRepository(User);
 
   async getAll(): Promise<User[]> {
-    try {
-      return await this.userRepository.find();
-    } catch (error) {
-      console.error("Error in getAll:", error);
-      throw new Error("Failed to fetch users");
-    }
+    return await this.userRepository.find();
   }
 
   async getUserById(userId: number): Promise<User | null> {
-    try {
-      return await this.userRepository.findOne({
-        where: { id: userId },
-        select: [
-          "id",
-          "name",
-          "email",
-          "roleId",
-          "isVerified",
-          "avatar_url",
-          "provider",
-        ],
-      });
-    } catch (error) {
-      console.error("Error in getUserById:", error);
-      throw new Error("Failed to get user by ID");
-    }
+    return await this.userRepository.findOne({
+      where: { id: userId },
+      select: [
+        "id",
+        "name",
+        "email",
+        "roleId",
+        "isVerified",
+        "avatar_url",
+        "provider",
+      ],
+    });
   }
 
   async createUser(data: Partial<User>): Promise<User> {
-    try {
-      const newUser = this.userRepository.create(data);
-      return await this.userRepository.save(newUser);
-    } catch (error) {
-      console.error("Error in createUser:", error);
-      throw new Error("Failed to create user");
-    }
+    const newUser = this.userRepository.create(data);
+    return await this.userRepository.save(newUser);
   }
 
   async updateUserProfile(
     userId: number,
     data: Partial<User>
   ): Promise<User | null> {
-    try {
-      await this.userRepository.update({ id: userId }, data);
-      return await this.getUserById(userId);
-    } catch (error) {
-      console.error("Error in updateUserProfile:", error);
-      throw new Error("Failed to update user profile");
-    }
+    await this.userRepository.update({ id: userId }, data);
+    return await this.getUserById(userId);
   }
 
   async updateUserAvatar(
     userId: number,
     avatarUrl: string
   ): Promise<User | null> {
-    try {
-      await this.userRepository.update(userId, { avatar_url: avatarUrl });
-      return await this.getUserById(userId);
-    } catch (error) {
-      console.error("Error in updateUserAvatar:", error);
-      throw new Error("Failed to update avatar");
-    }
+    await this.userRepository.update(userId, { avatar_url: avatarUrl });
+    return await this.getUserById(userId);
   }
 
   async deleteUser(userId: number): Promise<boolean> {
-    try {
-      const result = await this.userRepository.delete(userId);
-      return !!(result.affected && result.affected > 0);
-    } catch (error) {
-      console.error("Error in deleteUser:", error);
-      throw new Error("Failed to delete user");
-    }
+    const result = await this.userRepository.delete(userId);
+    return !!(result.affected && result.affected > 0);
   }
 }
 

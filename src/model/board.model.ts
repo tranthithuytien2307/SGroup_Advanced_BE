@@ -1,7 +1,6 @@
 import { AppDataSource } from "../data-source";
 import { Board } from "../entities/board.entity";
-import { BoardMember } from "../entities/board-member.entity";
-import { NotFoundError } from "../handler/error.response";
+import { BoardMember, BoardRole } from "../entities/board-member.entity";
 
 class BoardModel {
   private boardRepository = AppDataSource.getRepository(Board);
@@ -32,7 +31,7 @@ class BoardModel {
     name: string,
     workspace_id: number,
     created_by_id: number,
-    cover_url?: string,
+    cover_url?: string | null,
     description?: string | null
   ): Promise<Board> {
     const newBoard = this.boardRepository.create({
@@ -42,56 +41,35 @@ class BoardModel {
       cover_url: cover_url || null,
       description: description || null,
     });
+    return await this.boardRepository.save(newBoard);
+  }
 
-    const saved = await this.boardRepository.save(newBoard);
-
+  async createBoardMember(
+    boardId: number,
+    userId: number,
+    role: BoardRole = "admin"
+  ): Promise<BoardMember> {
     const member = this.boardMemberRepository.create({
-      board: { id: saved.id },
-      user: { id: created_by_id },
-      role: "admin",
+      board: { id: boardId } as Board,
+      user: { id: userId },
+      role,
     });
-    await this.boardMemberRepository.save(member);
-    
-    return saved;
+    return await this.boardMemberRepository.save(member);
   }
 
-  async updateBoard(
-    id: number,
-    name?: string,
-    cover_url?: string,
-    description?: string | null,
-    theme?: string | null,
-    is_archived?: boolean
-  ): Promise<Board> {
-    const board = await this.boardRepository.findOneBy({ id });
-    if (!board) throw new NotFoundError("Board not found");
-
-    if (name !== undefined) board.name = name;
-    if (cover_url !== undefined) board.cover_url = cover_url;
-    if (description !== undefined) board.description = description;
-    if (theme !== undefined) board.theme = theme;
-    if (is_archived !== undefined) {
-      board.is_archived = is_archived;
-      board.archived_at = is_archived ? new Date() : null;
-    }
-
+  async updateBoard(board: Board): Promise<Board> {
     return await this.boardRepository.save(board);
   }
 
-  async updateVisibility(
-    id: number,
-    visibility: "private" | "workspace" | "public"
-  ): Promise<Board> {
-    const board = await this.boardRepository.findOneBy({ id })
-    if (!board) throw new NotFoundError("Board not found");
-
-    board.visibility = visibility;
+  async archiveBoard(board: Board): Promise<Board> {
     return await this.boardRepository.save(board);
   }
 
-  async deleteBoard(id: number): Promise<void> {
-    const board = await this.boardRepository.findOneBy({ id });
-    if (!board) throw new NotFoundError("Board not found");
+  async unarchiveBoard(board: Board): Promise<Board> {
+    return await this.boardRepository.save(board);
+  }
+
+  async deleteBoard(board: Board): Promise<void> {
     await this.boardRepository.remove(board);
   }
 }
