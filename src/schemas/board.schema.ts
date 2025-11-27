@@ -50,6 +50,18 @@ export const BoardSchema = {
     }),
   }),
 
+  Archive: z.object({
+    params: z.object({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+    })
+  }),
+
+  Unarchive: z.object({
+    params: z.object({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+    })
+  }),
+
   Delete: z.object({
     params: z.object({
       board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),

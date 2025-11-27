@@ -66,7 +66,10 @@ router.put(
 );
 
 /**
- * 
+ *  -------------------------
+ *   UPDATE VISIBILITY
+ *  -------------------------
+ *  Quyền board: admin
  */
 router.put(
   "/visibility/:board_id",
@@ -74,6 +77,28 @@ router.put(
   authorizeBoard(["admin"]),
   validateRequest(BoardSchema.UpdateVisibility),
   asyncHandler(boardController.updateVisibility)
+)
+
+/** 
+ *  -------------------------
+ *     ARCHIVE BOARD & UNARCHIVE BOARD
+ *  -------------------------
+ *  Quyền board: admin
+ */
+router.post(
+  "/archive/:board_id",
+  authMiddleware,
+  authorizeBoard(["admin"]),
+  validateRequest(BoardSchema.Archive),
+  asyncHandler(boardController.archive)
+)
+
+router.post(
+  "/unarchive/:board_id",
+  authMiddleware,
+  authorizeBoard(["admin"]),
+  validateRequest(BoardSchema.Unarchive),
+  asyncHandler(boardController.unarchive)
 )
 
 /**

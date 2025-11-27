@@ -86,7 +86,6 @@ class BoardController {
       cover_url,
       description,
       theme,
-      is_archived,
     } = req.body;
     const data = await boardService.updateBoard(
       id,
@@ -94,7 +93,6 @@ class BoardController {
       cover_url,
       description,
       theme,
-      is_archived
     );
     if (!data) {
       throw new NotFoundError("Board not found");
@@ -127,6 +125,40 @@ class BoardController {
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Board visibility updated successfully",
+        data,
+        200
+      ),
+      res
+    );
+  }
+
+  archive = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.board_id, 10);
+    if (Number.isNaN(id)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+    const data = await boardService.archiveBoard(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Board archived successfully",
+        data,
+        200
+      ),
+      res
+    );
+  }
+
+  unarchive = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.board_id, 10);
+    if (Number.isNaN(id)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+    const data = await boardService.unarchiveBoard(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Board unarchived successfully",
         data,
         200
       ),
