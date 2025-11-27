@@ -66,7 +66,6 @@ class BoardService {
     cover_url?: string,
     description?: string | null,
     theme?: string | null,
-    visibility?: "private" | "workspace" | "public",
     is_archived?: boolean
   ): Promise<Board> {
     try {
@@ -76,7 +75,6 @@ class BoardService {
         cover_url,
         description,
         theme,
-        visibility,
         is_archived
       );
     } catch (error) {
@@ -87,6 +85,23 @@ class BoardService {
         throw new ErrorResponse(error.message, 404);
       }
       throw new InternalServerError("Failed to update board");
+    }
+  }
+
+  async updateVisibility(
+    id: number,
+    visibility: "private" | "workspace" | "public"
+  ): Promise<Board> {
+    try {
+      return await boardModel.updateVisibility(id, visibility);
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error;
+      }
+      if (error instanceof Error && error.message === "Board not found") {
+        throw new ErrorResponse(error.message, 404);
+      }
+      throw new InternalServerError("Failed to update board visibility");
     }
   }
 

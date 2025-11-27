@@ -41,6 +41,15 @@ export const BoardSchema = {
       }),
   }),
 
+  UpdateVisibility: z.object({
+    params: z.object({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+    }),
+    body: z.object({
+      visibility: z.enum(["private", "workspace", "public"]),
+    }),
+  }),
+
   Delete: z.object({
     params: z.object({
       board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),

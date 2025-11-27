@@ -27,6 +27,9 @@ class BoardController {
     if (Number.isNaN(id)) {
       throw new BadRequestError("Invalid Board Id");
     }
+    if (!id) {
+      throw new NotFoundError("Board not found");
+    }
     const data = await boardService.getById(id);
     if (!data) {
       throw new NotFoundError("Board not found");
@@ -75,12 +78,14 @@ class BoardController {
     if (Number.isNaN(id)) {
       throw new BadRequestError("Invalid Board Id");
     }
+    if (!id) {
+      throw new NotFoundError("Board not found");
+    }
     const {
       name,
       cover_url,
       description,
       theme,
-      visibility,
       is_archived,
     } = req.body;
     const data = await boardService.updateBoard(
@@ -89,7 +94,6 @@ class BoardController {
       cover_url,
       description,
       theme,
-      visibility,
       is_archived
     );
     if (!data) {
@@ -105,6 +109,30 @@ class BoardController {
       res
     );
   };
+
+  updateVisibility = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.board_id, 10);
+    if (Number.isNaN(id)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+    if (!id) {
+      throw new NotFoundError("Board not found");
+    }
+    const { visibility } = req.body;
+    const data = await boardService.updateVisibility(id, visibility);
+    if (!data) {
+      throw new NotFoundError("Board not found");
+    }
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Board visibility updated successfully",
+        data,
+        200
+      ),
+      res
+    );
+  }
 
   delete = async (req: Request, res: Response) => {
     const id = parseInt(req.params.board_id, 10);

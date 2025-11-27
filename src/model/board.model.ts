@@ -1,6 +1,7 @@
 import { AppDataSource } from "../data-source";
 import { Board } from "../entities/board.entity";
 import { BoardMember } from "../entities/board-member.entity";
+import { NotFoundError } from "../handler/error.response";
 
 class BoardModel {
   private boardRepository = AppDataSource.getRepository(Board);
@@ -60,17 +61,15 @@ class BoardModel {
     cover_url?: string,
     description?: string | null,
     theme?: string | null,
-    visibility?: "private" | "workspace" | "public",
     is_archived?: boolean
   ): Promise<Board> {
     const board = await this.boardRepository.findOneBy({ id });
-    if (!board) throw new Error("Board not found");
+    if (!board) throw new NotFoundError("Board not found");
 
     if (name !== undefined) board.name = name;
     if (cover_url !== undefined) board.cover_url = cover_url;
     if (description !== undefined) board.description = description;
     if (theme !== undefined) board.theme = theme;
-    if (visibility !== undefined) board.visibility = visibility;
     if (is_archived !== undefined) {
       board.is_archived = is_archived;
       board.archived_at = is_archived ? new Date() : null;
@@ -79,9 +78,20 @@ class BoardModel {
     return await this.boardRepository.save(board);
   }
 
+  async updateVisibility(
+    id: number,
+    visibility: "private" | "workspace" | "public"
+  ): Promise<Board> {
+    const board = await this.boardRepository.findOneBy({ id })
+    if (!board) throw new NotFoundError("Board not found");
+
+    board.visibility = visibility;
+    return await this.boardRepository.save(board);
+  }
+
   async deleteBoard(id: number): Promise<void> {
     const board = await this.boardRepository.findOneBy({ id });
-    if (!board) throw new Error("Board not found");
+    if (!board) throw new NotFoundError("Board not found");
     await this.boardRepository.remove(board);
   }
 }

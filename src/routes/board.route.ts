@@ -66,6 +66,17 @@ router.put(
 );
 
 /**
+ * 
+ */
+router.put(
+  "/visibility/:board_id",
+  authMiddleware,
+  authorizeBoard(["admin"]),
+  validateRequest(BoardSchema.UpdateVisibility),
+  asyncHandler(boardController.updateVisibility)
+)
+
+/**
  * -------------------------
  *   DELETE BOARD
  * -------------------------
