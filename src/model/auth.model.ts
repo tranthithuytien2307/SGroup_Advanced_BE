@@ -115,6 +115,7 @@ class AuthModel {
       throw new Error("Failed to get user by ID");
     }
   }
+  
   async updatePasswordByEmail(
     email: string,
     hashedPassword: string

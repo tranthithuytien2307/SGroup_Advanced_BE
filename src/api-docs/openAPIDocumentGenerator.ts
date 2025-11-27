@@ -1,34 +1,43 @@
-export const openAPIDocument = {
-  openapi: "3.0.0",
-  info: {
-    title: "My API",
-    version: "1.0.0",
-    description: "API documentation for my-backend project",
-  },
-  servers: [
-    {
-      url: "http://localhost:3000",
-      description: "Local server",
+import { authRegistry } from "../routes/auth.route";
+import { boardRegistry } from "../routes/board.route";
+import { healthCheckRegistry } from "../routes/health.route";
+import { workspaceMemberRegistry } from "../routes/workspace-member.route";
+import { userRegistry } from "../routes/user.route";
+import { workspaceRegistry } from "../routes/workspace.route";
+import {
+  OpenApiGeneratorV3,
+  OpenAPIRegistry,
+} from "@asteasolutions/zod-to-openapi";
+
+export function generateOpenAPIDocument(): ReturnType<
+  InstanceType<typeof OpenApiGeneratorV3>["generateDocument"]
+> {
+  const registry = new OpenAPIRegistry([
+    userRegistry,
+    healthCheckRegistry,
+    authRegistry,
+    workspaceRegistry,
+    boardRegistry,
+    workspaceMemberRegistry,
+  ]);
+
+  registry.registerComponent("securitySchemes", "BearerAuth", {
+    type: "http",
+    scheme: "bearer",
+    bearerFormat: "JWT",
+  });
+
+  const generator = new OpenApiGeneratorV3(registry.definitions);
+
+  return generator.generateDocument({
+    openapi: "3.0.0",
+    info: {
+      version: "1.0.0",
+      title: "Swagger API",
     },
-  ],
-  components: {
-    schemas: {
-      User: {
-        type: "object",
-        properties: {
-          id: { type: "integer", example: 1 },
-          name: { type: "string", example: "John Doe" },
-          email: { type: "string", example: "john@example.com" },
-        },
-      },
-      UserInput: {
-        type: "object",
-        required: ["name", "email"],
-        properties: {
-          name: { type: "string", example: "John Doe" },
-          email: { type: "string", example: "john@example.com" },
-        },
-      },
+    externalDocs: {
+      description: "View the raw OpenAPI Specification in JSON format",
+      url: "/swagger.json",
     },
-  },
-};
+  });
+}
