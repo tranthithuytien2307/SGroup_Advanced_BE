@@ -5,10 +5,13 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
   JoinColumn,
 } from "typeorm";
 import { Workspace } from "./workspace.entity";
 import { User } from "./user.entity";
+import { BoardMember } from "./board-member.entity";
+import { BoardInvitation } from "./board_invitations.entity";
 
 @Entity("boards")
 export class Board {
@@ -26,6 +29,12 @@ export class Board {
 
   @Column({ type: "varchar", nullable: true })
   theme!: string | null; // Background color
+
+  @Column({ type: "varchar", nullable: true })
+  invite_token!: string | null;
+
+  @Column({ default: false })
+  invite_enabled!: boolean;
 
   @Column({ default: false })
   is_archived!: boolean;
@@ -46,6 +55,12 @@ export class Board {
   @JoinColumn({ name: "workspace_id" })
   workspace!: Workspace;
 
+  @OneToMany(() => BoardMember, (boardMember) => boardMember.board)
+  members!: BoardMember[];
+
+  @OneToMany(() => BoardInvitation, (inv) => inv.board)
+  invitations!: BoardInvitation[];
+
   @Column()
   workspace_id!: number;
 
@@ -62,8 +77,4 @@ export class Board {
 
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
-
-  @UpdateDateColumn({ type: "timestamp" })
-  updated_at!: Date;
-  members: any;
 }

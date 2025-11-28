@@ -14,7 +14,7 @@ const router = Router();
 
 workspaceMemberRegistry.registerPath({
   method: "post",
-  path: "/api/workspace/:workspaceId/invation",
+  path: "/api/workspace-member/:workspaceId/invation",
   tags: ["WorkspaceMember"],
   security: [{ BearerAuth: [] }],
   request: {
@@ -36,7 +36,7 @@ router.post(
 
 workspaceMemberRegistry.registerPath({
   method: "get",
-  path: "/api/workspace/invite/accept",
+  path: "/api/workspace-member/invite/accept",
   tags: ["WorkspaceMember"],
   responses: createApiResponse(z.null(), "Accept workspace invitation"),
 });
@@ -49,7 +49,7 @@ router.get(
 
 workspaceMemberRegistry.registerPath({
   method: "get",
-  path: "/api/workspace/:workspaceId/members",
+  path: "/api/workspace-member/:workspaceId/members",
   tags: ["WorkspaceMember"],
   security: [{ BearerAuth: [] }],
   request: { params: WorkspaceMemberSchema.ParamsWorkspaceId },
@@ -65,7 +65,7 @@ router.get(
 
 workspaceMemberRegistry.registerPath({
   method: "put",
-  path: "/api/workspace/:workspaceId/members/:userId",
+  path: "/api/workspace-member/:workspaceId/members/:userId",
   tags: ["WorkspaceMember"],
   security: [{ BearerAuth: [] }],
   request: {
@@ -89,7 +89,7 @@ router.put(
 
 workspaceMemberRegistry.registerPath({
   method: "delete",
-  path: "/api/workspace/:workspaceId/members/:userId",
+  path: "/api/workspace-member/:workspaceId/members/:userId",
   tags: ["WorkspaceMember"],
   security: [{ BearerAuth: [] }],
   request: { params: WorkspaceMemberSchema.ParamsWorkspaceUser },

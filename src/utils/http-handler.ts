@@ -34,7 +34,6 @@ export const handleServiceResponse = (
   return response.status(serviceResponse.statusCode).send(serviceResponse);
 };
 
-// Kiểu xác định nơi validate
 type RequestPart = "body" | "query" | "params";
 
 /**

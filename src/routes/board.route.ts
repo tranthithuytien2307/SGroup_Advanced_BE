@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { response, Router } from "express";
 import boardController from "../controllers/board.controller";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { validateRequest } from "../utils/http-handler";
@@ -35,7 +35,7 @@ boardRegistry.registerPath({
 router.get(
   "/:id",
   authMiddleware,
-  validateRequest(BoardSchema.GetById),
+  validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin", "member", "viewer"]),
   asyncHandler(boardController.getById)
 );
@@ -91,7 +91,7 @@ boardRegistry.registerPath({
 router.delete(
   "/:id",
   authMiddleware,
-  validateRequest(BoardSchema.Delete),
+  validateRequest(BoardSchema.Delete, "params"),
   authorizeBoard(["admin"]),
   asyncHandler(boardController.delete)
 );
@@ -108,9 +108,130 @@ boardRegistry.registerPath({
 router.get(
   "/workspace/:workspace_id",
   authMiddleware,
-  validateRequest(BoardSchema.GetByWorkspace),
+  validateRequest(BoardSchema.GetByWorkspace, "params"),
   authorizeWorkspace(["owner", "admin", "member", "viewer"]),
   asyncHandler(boardController.getByWorkspaceId)
 );
 
+boardRegistry.registerPath({
+  method: "patch",
+  path: "/api/board/:id/owner",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: { "application/json": { schema: BoardSchema.ChangeOwner } },
+    },
+    params: BoardSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Change board owner"),
+});
+
+router.patch(
+  "/:id/change-owner",
+  authMiddleware,
+  validateRequest(BoardSchema.ChangeOwner),
+  authorizeBoard(["admin"]),
+  asyncHandler(boardController.changeOwner)
+);
+
+boardRegistry.registerPath({
+  method: "get",
+  path: "/api/board/:id/link_invite/",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: { params: BoardSchema.GetById },
+  responses: createApiResponse(z.null(), "Get board invite link"),
+});
+
+router.get(
+  "/:id/link_invite",
+  authMiddleware,
+  validateRequest(BoardSchema.GetById, "params"),
+  authorizeBoard(["admin", "member", "viewer"]),
+  asyncHandler(boardController.inviteLink)
+);
+
+boardRegistry.registerPath({
+  method: "post",
+  path: "/api/board/:id/invite/regenerate",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: { params: BoardSchema.GetById },
+  responses: createApiResponse(z.null(), "Regenerate board invite link"),
+});
+
+router.post(
+  "/:id/invite/regenerate",
+  authMiddleware,
+  validateRequest(BoardSchema.GetById, "params"),
+  authorizeBoard(["admin"]),
+  asyncHandler(boardController.regenerateInviteLink)
+);
+
+boardRegistry.registerPath({
+  method: "post",
+  path: "/api/board/:id/invite/disable",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: { params: BoardSchema.GetById },
+  responses: createApiResponse(z.null(), "Disable board invite link"),
+});
+
+router.post(
+  "/:id/invite/disable",
+  authMiddleware,
+  validateRequest(BoardSchema.GetById, "params"),
+  authorizeBoard(["admin"]),
+  asyncHandler(boardController.disableInviteLink)
+);
+
+boardRegistry.registerPath({
+  method: "post",
+  path: "/api/board/:id/invite/join",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: { params: BoardSchema.GetById },
+  responses: createApiResponse(z.null(), "Enable board invite link"),
+});
+
+router.post(
+  "/invite/:invite_token",
+  authMiddleware,
+  validateRequest(BoardSchema.JoinInvite, "params"),
+  asyncHandler(boardController.joinViaInviteLink)
+);
+
+boardRegistry.registerPath({
+  method: "post",
+  path: "/api/board/:id/invation-email",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: { "application/json": { schema: BoardSchema.InviteEmail } },
+    },
+    params: BoardSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Invite member to workspace"),
+});
+
+router.post(
+  "/:id/invation-email",
+  authMiddleware,
+  validateRequest(BoardSchema.InviteEmail),
+  asyncHandler(boardController.inviteMember)
+);
+
+boardRegistry.registerPath({
+  method: "get",
+  path: "/api/board/invite-email/accept",
+  tags: ["WorkspaceMember"],
+  responses: createApiResponse(z.null(), "Accept board invitation"),
+});
+
+router.get(
+  "/invite-email/accept",
+  asyncHandler(boardController.acceptInvitation)
+);
 export default router;

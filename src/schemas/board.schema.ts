@@ -80,9 +80,39 @@ export const BoardSchema = {
         }),
     })
     .openapi("GetBoardsByWorkspaceParams"),
+  ChangeOwner: z.object({
+    new_owner_id: z
+      .string()
+      .regex(/^\d+$/, "User ID must be a number")
+      .openapi({
+        description: "User ID",
+      }),
+  }),
+  JoinInvite: z
+    .object({
+      invite_token: z
+        .string()
+        .uuid("Invite token must be a valid UUID")
+        .openapi({
+          description: "Invite token",
+        }),
+    })
+    .openapi("JoinBoardByInviteTokenParams"),
+  InviteEmail: z
+    .object({
+      email: z
+        .string()
+        .email("Invalid email format")
+        .openapi({ description: "Email of the user to invite" }),
+    })
+    .openapi("InviteMemberRequest"),
 };
 
 export type CreateBoardInput = z.infer<typeof BoardSchema.Create>;
 export type UpdateBoardInput = z.infer<typeof BoardSchema.Update>;
 export type BoardParams = z.infer<typeof BoardSchema.GetById>;
 export type WorkspaceBoardParams = z.infer<typeof BoardSchema.GetByWorkspace>;
+export type ChangeBoardOwnerInput = z.infer<typeof BoardSchema.ChangeOwner>;
+export type JoinBoardByInviteTokenParams = z.infer<
+  typeof BoardSchema.JoinInvite
+>;

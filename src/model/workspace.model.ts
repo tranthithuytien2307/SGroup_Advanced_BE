@@ -10,7 +10,7 @@ class WorkspaceModel {
   async getAll() {
     const workspaces = await this.workspaceRepository.find({
       where: { is_delete: false },
-      relations: ["boards"], 
+      relations: ["boards"],
       order: { id: "ASC" },
     });
 
@@ -38,9 +38,9 @@ class WorkspaceModel {
   }
 
   async getById(id: number) {
-    return await this.workspaceRepository.findOne({ 
+    return await this.workspaceRepository.findOne({
       where: { id },
-      relations: ["owner", "boards", "members", "members.user"], 
+      relations: ["owner", "boards", "members", "members.user"],
     });
   }
 
@@ -72,7 +72,7 @@ class WorkspaceModel {
   ) {
     const workspace = await this.workspaceRepository.findOne({
       where: { id },
-      relations: ["members","members.user"],
+      relations: ["members", "members.user"],
     });
     if (!workspace) throw new Error("Workspace not found");
 
@@ -95,7 +95,12 @@ class WorkspaceModel {
     });
     if (!workspace) throw new Error("Workspace not found");
 
-    const member = workspace.members.find((m) => m.user.id === userId);// coi lai thu 
+    const member = await this.memberRepository.findOne({
+      where: {
+        user: { id: userId },
+        workspace: { id: id },
+      },
+    });
     if (!member || member.role !== "owner") {
       throw new Error("Permission denied");
     }
