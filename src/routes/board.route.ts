@@ -148,7 +148,7 @@ router.get(
   "/:id/link_invite",
   authMiddleware,
   validateRequest(BoardSchema.GetById, "params"),
-  authorizeBoard(["admin", "member", "viewer"]),
+  authorizeBoard(["admin", "member"]),
   asyncHandler(boardController.inviteLink)
 );
 

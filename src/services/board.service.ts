@@ -24,7 +24,7 @@ class BoardService {
     try {
       const board = await boardModel.getById(id);
       if (!board) {
-        throw new ErrorResponse("Board not found", 404);
+        throw new NotFoundError("Board not found", 404);
       }
       return board;
     } catch (error) {
@@ -39,7 +39,7 @@ class BoardService {
     try {
       const boards = await boardModel.getBoardsByWorkspaceId(workspace_id);
       if (!boards || boards.length === 0) {
-        throw new ErrorResponse("No boards found for this workspace", 404);
+        throw new NotFoundError("No boards found for this workspace", 404);
       }
       return boards;
     } catch (error) {
@@ -87,7 +87,7 @@ class BoardService {
         throw error;
       }
       if (error instanceof Error && error.message === "Board not found") {
-        throw new ErrorResponse(error.message, 404);
+        throw new NotFoundError(error.message, 404);
       }
       throw new InternalServerError("Failed to update board");
     }
@@ -101,25 +101,25 @@ class BoardService {
         throw error;
       }
       if (error instanceof Error && error.message === "Board not found") {
-        throw new ErrorResponse(error.message, 404);
+        throw new NotFoundError(error.message, 404);
       }
       throw new InternalServerError("Failed to delete board");
     }
   }
 
-  async changeOwner(boardId: number, newOwnerId: number): Promise<Board> {
+  async changeOwner(boardId: number, newOwnerId: number): Promise<BoardMember> {
     try {
       const board = await boardModel.getById(boardId);
       if (!board) {
-        throw new ErrorResponse("Board not found", 404);
+        throw new NotFoundError("Board not found", 404);
       }
 
       if (!board.created_by_id) {
-        throw new ErrorResponse("Board has no owner", 400);
+        throw new NotFoundError("Board has no owner", 400);
       }
 
       if (board.created_by_id === newOwnerId) {
-        throw new ErrorResponse(
+        throw new BadRequestError(
           "New owner must be different from current owner",
           400
         );
@@ -127,7 +127,7 @@ class BoardService {
 
       const isMember = await boardModel.isUserBoardMember(boardId, newOwnerId);
       if (!isMember) {
-        throw new ErrorResponse("New owner must be a board member", 400);
+        throw new BadRequestError("New owner must be a board member", 400);
       }
 
       return await boardModel.changeOwnerBoard(boardId, newOwnerId);
@@ -143,10 +143,13 @@ class BoardService {
     try {
       const board = await boardModel.getById(id);
       if (!board) {
-        throw new ErrorResponse("Board not found", 404);
+        throw new NotFoundError("Board not found", 404);
       }
       if (!board.invite_enabled) {
-        throw new ErrorResponse("Invites are not enabled for this board", 400);
+        throw new BadRequestError(
+          "Invites are not enabled for this board",
+          400
+        );
       } else {
         return {
           inviteUrl: `http://localhost:3000/api/board/invite/${board.invite_token}`,
@@ -162,7 +165,7 @@ class BoardService {
     try {
       const board = await boardModel.getById(id);
       if (!board) {
-        throw new ErrorResponse("Board not found", 404);
+        throw new NotFoundError("Board not found", 404);
       }
       const newInviteToken = randomUUID();
       return await boardModel.regenerateInviteLink(id, newInviteToken);
@@ -175,7 +178,7 @@ class BoardService {
     try {
       const board = await boardModel.getById(id);
       if (!board) {
-        throw new ErrorResponse("Board not found", 404);
+        throw new NotFoundError("Board not found", 404);
       }
       const disabledInvite = !board.invite_enabled;
       return await boardModel.disableInviteLink(id, disabledInvite);
@@ -191,17 +194,20 @@ class BoardService {
     try {
       const board = await boardModel.getBoardByInviteToken(invite_token);
       if (!board) {
-        throw new ErrorResponse("Board not found", 404);
+        throw new NotFoundError("Board not found", 404);
       }
       if (!board.invite_enabled) {
-        throw new ErrorResponse("Invites are not enabled for this board", 400);
+        throw new BadRequestError(
+          "Invites are not enabled for this board",
+          400
+        );
       }
       const existingMember = await boardModel.isUserBoardMember(
         board.id,
         userId
       );
       if (existingMember) {
-        throw new ErrorResponse("User must not be a board member", 400);
+        throw new BadRequestError("User must not be a board member", 400);
       }
       return await boardModel.createInvitionUser(board.id, userId);
     } catch (error) {

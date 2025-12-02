@@ -59,8 +59,7 @@ workspaceRegistry.registerPath({
 router.post(
   "/",
   authMiddleware,
-  validateRequest(WorkspaceSchema.Create),
-  authorizeWorkspace(["owner", "admin", "member"]),
+  validateRequest(WorkspaceSchema.Create, "body"),
   asyncHandler(workspaceController.createWorkspace)
 );
 

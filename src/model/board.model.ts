@@ -123,7 +123,10 @@ class BoardModel {
     return await this.boardInvitationRepository.save(invite);
   }
 
-  async changeOwnerBoard(boardId: number, newOwnerId: number): Promise<Board> {
+  async changeOwnerBoard(
+    boardId: number,
+    newOwnerId: number
+  ): Promise<BoardMember> {
     const board = await this.boardRepository.findOneBy({ id: boardId });
     if (!board) throw new Error("Board not found");
 
@@ -139,10 +142,7 @@ class BoardModel {
     }
 
     newOwnerMember.role = "admin";
-    await this.boardMemberRepository.save(newOwnerMember);
-
-    board.created_by_id = newOwnerId;
-    return await this.boardRepository.save(board);
+    return await this.boardMemberRepository.save(newOwnerMember);
   }
 
   async regenerateInviteLink(id: number, invite_token: string): Promise<Board> {
