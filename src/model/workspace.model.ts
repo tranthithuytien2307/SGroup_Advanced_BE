@@ -2,11 +2,6 @@ import { AppDataSource } from "../data-source";
 import { Workspace } from "../entities/workspace.entity";
 import { WorkspaceMember } from "../entities/workspace-member.entity";
 
-/**
- * WorkspaceModel - Pure Data Access Layer
- * Only handles database operations, returns data or null
- * No business logic, no validation, no error throwing
- */
 class WorkspaceModel {
   private workspaceRepository = AppDataSource.getRepository(Workspace);
   private memberRepository = AppDataSource.getRepository(WorkspaceMember);

@@ -4,11 +4,6 @@ import { User } from "../entities/user.entity";
 import { WorkspaceMember } from "../entities/workspace-member.entity";
 import { WorkspaceInvitation } from "../entities/workspace-invitations.entity";
 
-/**
- * WorkspaceMemberModel - Pure Data Access Layer
- * Only handles database operations, returns data or null
- * No business logic, no validation, no error throwing
- */
 class WorkspaceMemberModel {
   private workspaceRepo = AppDataSource.getRepository(Workspace);
   private userRepo = AppDataSource.getRepository(User);

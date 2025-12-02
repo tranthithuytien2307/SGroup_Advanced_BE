@@ -1,11 +1,6 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/user.entity";
 
-/**
- * UserModel - Pure Data Access Layer
- * Only handles database operations, returns data or null
- * No business logic, no validation, no error throwing
- */
 class UserModel {
   private userRepository = AppDataSource.getRepository(User);
 
