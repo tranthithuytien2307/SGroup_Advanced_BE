@@ -28,6 +28,7 @@ export const authorizeBoard = (
       // - body
       const boardId =
         req.params.id ||
+        req.params.board_id ||
         req.query.board_id ||
         req.body.board_id;
 

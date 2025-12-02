@@ -6,7 +6,7 @@ extendZodWithOpenApi(z);
 export const BoardSchema = {
   GetById: z
     .object({
-      id: z.string().regex(/^\d+$/, "Board ID must be a number").openapi({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number").openapi({
         description: "Board ID",
       }),
     })
@@ -63,7 +63,7 @@ export const BoardSchema = {
 
   Delete: z
     .object({
-      id: z
+      board_id: z
         .string()
         .regex(/^\d+$/, "Board ID must be a number")
         .openapi({ description: "Board ID" }),
@@ -106,6 +106,18 @@ export const BoardSchema = {
         .openapi({ description: "Email of the user to invite" }),
     })
     .openapi("InviteMemberRequest"),
+
+  Archive: z
+    .object({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+    })
+    .openapi("ArchiveBoardParams"),
+
+  Unarchive: z
+    .object({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+    })
+    .openapi("UnarchiveBoardParams"),
 };
 
 export type CreateBoardInput = z.infer<typeof BoardSchema.Create>;

@@ -5,9 +5,9 @@ dotenv.config();
 
 interface UserPayload {
   id: number;
-  role: Role;
   email: string;
   role_id: number;
+  role: Role;
 }
 
 function getEnv(name: string): string {
@@ -24,9 +24,9 @@ export const userProvides = {
 
     const payload = {
       id: user.id,
-      role: user.role,
       email: user.email,
       role_id: user.role_id,
+      role: user.role,
     } as Record<string, unknown>;
 
     const options: SignOptions = {
@@ -44,8 +44,9 @@ export const userProvides = {
 
     const payload = {
       id: user.id,
-      role: user.role,
+      email: user.email,
       role_id: user.role_id,
+      role: user.role,
     } as Record<string, unknown>;
 
     const options: SignOptions = {

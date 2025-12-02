@@ -16,7 +16,7 @@ class AuthModel {
           "name",
           "isVerified",
           "verifyToken",
-          "role_id",
+          "role",
           "refreshToken",
         ],
       });
@@ -42,7 +42,6 @@ class AuthModel {
       newUser.name = user;
       newUser.isVerified = false;
       newUser.verifyToken = crypto.randomBytes(32).toString("hex");
-      newUser.role_id = 3;
 
       return await userRepository.save(newUser);
     } catch (error) {
@@ -70,7 +69,6 @@ class AuthModel {
       newUser.provider = provider;
       newUser.provider_id = provider_id;
       newUser.avatar_url = avatar_url || null;
-      newUser.role_id = 3;
 
       return await userRepository.save(newUser);
     } catch (error) {
@@ -107,7 +105,7 @@ class AuthModel {
       const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({
         where: { id: userId },
-        select: ["id", "email", "name", "role_id", "isVerified", "avatar_url"],
+        select: ["id", "email", "name", "role", "isVerified", "avatar_url"],
       });
       return user;
     } catch (err) {

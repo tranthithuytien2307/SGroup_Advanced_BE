@@ -28,9 +28,7 @@ class BoardService {
       }
       return board;
     } catch (error) {
-      if (error instanceof ErrorResponse) {
-        throw error;
-      }
+      if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to fetch board");
     }
   }
@@ -43,9 +41,7 @@ class BoardService {
       }
       return boards;
     } catch (error) {
-      if (error instanceof ErrorResponse) {
-        throw error;
-      }
+      if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to fetch boards");
     }
   }
@@ -67,7 +63,9 @@ class BoardService {
         randomUUID(),
         true
       );
-      await boardModel.saveAdminToBoard(board.id, created_by_id);
+
+      await boardModel.createBoardMember(board.id, created_by_id, "admin");
+
       return board;
     } catch (error) {
       throw new InternalServerError("Failed to create board");
@@ -76,12 +74,25 @@ class BoardService {
 
   async updateBoard(
     id: number,
-    name: string,
+    name?: string,
     cover_url?: string,
-    description?: string
+    description?: string | null,
+    theme?: string | null,
+    is_archived?: boolean
   ): Promise<Board> {
     try {
-      return await boardModel.updateBoard(id, name, cover_url, description);
+      // Validate board exists
+      const board = await boardModel.getById(id);
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      if (name !== undefined) board.name = name;
+      if (cover_url !== undefined) board.cover_url = cover_url;
+      if (description !== undefined) board.description = description;
+      if (theme !== undefined) board.theme = theme;
+
+      return await boardModel.updateBoard(board);
     } catch (error) {
       if (error instanceof ErrorResponse) {
         throw error;
@@ -93,9 +104,33 @@ class BoardService {
     }
   }
 
+  async updateVisibility(
+    id: number,
+    visibility: "private" | "workspace" | "public"
+  ): Promise<Board> {
+    try {
+      const board = await boardModel.getById(id);
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      board.visibility = visibility;
+      return await boardModel.updateBoard(board);
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to update board visibility");
+    }
+  }
+
   async deleteBoard(id: number): Promise<void> {
     try {
-      await boardModel.deleteBoard(id);
+      // Validate board exists
+      const board = await boardModel.getById(id);
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      await boardModel.deleteBoard(board);
     } catch (error) {
       if (error instanceof ErrorResponse) {
         throw error;
@@ -285,6 +320,44 @@ class BoardService {
       if (error instanceof ErrorResponse) throw error;
       console.error("Error in acceptInvitation:", error);
       throw new InternalServerError("Failed to accept invitation");
+    }
+  }
+  
+  async archiveBoard(id: number): Promise<Board> {
+    try {
+      // Validate board exists
+      const board = await boardModel.getById(id);
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      // Set archive state
+      board.is_archived = true;
+      board.archived_at = new Date();
+
+      return await boardModel.archiveBoard(board);
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to archive board");
+    }
+  }
+
+  async unarchiveBoard(id: number): Promise<Board> {
+    try {
+      // Validate board exists
+      const board = await boardModel.getById(id);
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      // Remove archive state
+      board.is_archived = false;
+      board.archived_at = null;
+
+      return await boardModel.unarchiveBoard(board);
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to unarchive board");
     }
   }
 }

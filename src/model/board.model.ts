@@ -51,29 +51,35 @@ class BoardModel {
       invite_token: invite_token || null,
       invite_enabled: invite_enabled || false,
     });
-
     return await this.boardRepository.save(newBoard);
   }
 
-  async updateBoard(
-    id: number,
-    name: string,
-    cover_url?: string,
-    description?: string
-  ): Promise<Board> {
-    const board = await this.boardRepository.findOneBy({ id });
-    if (!board) throw new Error("Board not found");
+  async createBoardMember(
+    boardId: number,
+    userId: number,
+    role: BoardRole = "admin"
+  ): Promise<BoardMember> {
+    const member = this.boardMemberRepository.create({
+      board: { id: boardId } as Board,
+      user: { id: userId },
+      role,
+    });
+    return await this.boardMemberRepository.save(member);
+  }
 
-    board.name = name || board.name;
-    board.cover_url = cover_url || board.cover_url;
-    board.description = description || board.description;
-
+  async updateBoard(board: Board): Promise<Board> {
     return await this.boardRepository.save(board);
   }
 
-  async deleteBoard(id: number): Promise<void> {
-    const board = await this.boardRepository.findOneBy({ id });
-    if (!board) throw new Error("Board not found");
+  async archiveBoard(board: Board): Promise<Board> {
+    return await this.boardRepository.save(board);
+  }
+
+  async unarchiveBoard(board: Board): Promise<Board> {
+    return await this.boardRepository.save(board);
+  }
+
+  async deleteBoard(board: Board): Promise<void> {
     await this.boardRepository.remove(board);
   }
   async isUserBoardMember(boardId: number, userId: number): Promise<boolean> {
@@ -177,19 +183,6 @@ class BoardModel {
     });
 
     return await this.boardMemberRepository.save(newMember);
-  }
-
-  async saveAdminToBoard(
-    boardId: number,
-    userId: number
-  ): Promise<BoardMember> {
-    const admin = this.boardMemberRepository.create({
-      board: { id: boardId } as any,
-      user: { id: userId } as any,
-      role: "admin",
-    });
-
-    return await this.boardMemberRepository.save(admin);
   }
 
   async createUser(email: string, name?: string): Promise<User> {

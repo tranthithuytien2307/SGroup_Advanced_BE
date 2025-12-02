@@ -10,8 +10,16 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
 
+
 export const boardRegistry = new OpenAPIRegistry();
 const router = Router();
+
+/**
+ * -------------------------
+ *   GET ALL BOARDS
+ * -------------------------
+ * Yêu cầu: phải là member của workspace chứa board.
+ */
 
 boardRegistry.registerPath({
   method: "get",
@@ -21,7 +29,19 @@ boardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Get all boards"),
 });
 
-router.get("/", authMiddleware, asyncHandler(boardController.getAll));
+router.get(
+  "/",
+  authMiddleware,
+  authorizeBoard(["admin", "member", "viewer"]),  
+  asyncHandler(boardController.getAll)
+);
+
+/**
+ * -------------------------
+ *  GET BOARD BY ID
+ * -------------------------
+ * Quyền board: admin, member, viewer
+ */
 
 boardRegistry.registerPath({
   method: "get",
@@ -33,12 +53,20 @@ boardRegistry.registerPath({
 });
 
 router.get(
-  "/:id",
+  "/:board_id",
   authMiddleware,
-  validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin", "member", "viewer"]),
+  validateRequest(BoardSchema.GetById),
   asyncHandler(boardController.getById)
 );
+
+/**
+ * -------------------------
+ *   CREATE BOARD
+ * -------------------------
+ * Quyền workspace: owner, admin, member
+ * Viewer workspace không được tạo board
+ */
 
 boardRegistry.registerPath({
   method: "post",
@@ -54,10 +82,17 @@ boardRegistry.registerPath({
 router.post(
   "/",
   authMiddleware,
-  validateRequest(BoardSchema.Create),
   authorizeWorkspace(["owner", "admin", "member"]),
+  validateRequest(BoardSchema.Create),
   asyncHandler(boardController.create)
 );
+
+/**
+ * -------------------------
+ *    UPDATE BOARD
+ * -------------------------
+ * Quyền board: admin, member
+ */
 
 boardRegistry.registerPath({
   method: "put",
@@ -72,12 +107,19 @@ boardRegistry.registerPath({
 });
 
 router.put(
-  "/:id",
+  "/:board_id",
   authMiddleware,
-  validateRequest(BoardSchema.Update),
   authorizeBoard(["admin", "member"]),
+  validateRequest(BoardSchema.Update),
   asyncHandler(boardController.update)
 );
+
+/**
+ * -------------------------
+ *    DELETE BOARD
+ * -------------------------
+ * Quyền board: admin
+ */
 
 boardRegistry.registerPath({
   method: "delete",
@@ -89,12 +131,18 @@ boardRegistry.registerPath({
 });
 
 router.delete(
-  "/:id",
+  "/:board_id",
   authMiddleware,
   validateRequest(BoardSchema.Delete, "params"),
   authorizeBoard(["admin"]),
   asyncHandler(boardController.delete)
 );
+
+/** -------------------------
+ * GET BOARDS BY WORKSPACE ID
+ * -------------------------
+ * Quyền workspace: owner, admin, member, viewer
+ */
 
 boardRegistry.registerPath({
   method: "get",
@@ -113,8 +161,15 @@ router.get(
   asyncHandler(boardController.getByWorkspaceId)
 );
 
+
+/**
+ * -------------------------
+ *    CHANGE BOARD OWNER
+ * -------------------------
+ * Quyền board: admin
+ */
 boardRegistry.registerPath({
-  method: "patch",
+  method: "put",
   path: "/api/board/:id/owner",
   tags: ["Board"],
   security: [{ BearerAuth: [] }],
@@ -127,14 +182,21 @@ boardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Change board owner"),
 });
 
-router.patch(
-  "/:id/change-owner",
+router.put(
+  "/:board_id/change-owner",
   authMiddleware,
   validateRequest(BoardSchema.ChangeOwner),
   authorizeBoard(["admin"]),
   asyncHandler(boardController.changeOwner)
 );
 
+
+/**
+ * -------------------------
+ *    BOARD INVITE LINK
+ * -------------------------
+ * Quyền board: admin, member
+ */
 boardRegistry.registerPath({
   method: "get",
   path: "/api/board/:id/link_invite/",
@@ -145,13 +207,18 @@ boardRegistry.registerPath({
 });
 
 router.get(
-  "/:id/link_invite",
+  "/:board_id/link_invite",
   authMiddleware,
   validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin", "member"]),
   asyncHandler(boardController.inviteLink)
 );
 
+/** -------------------------
+ *   REGENERATE BOARD INVITE LINK
+ * -------------------------
+ * Quyền board: admin
+ */
 boardRegistry.registerPath({
   method: "post",
   path: "/api/board/:id/invite/regenerate",
@@ -162,13 +229,19 @@ boardRegistry.registerPath({
 });
 
 router.post(
-  "/:id/invite/regenerate",
+  "/:board_id/invite/regenerate",
   authMiddleware,
   validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin"]),
   asyncHandler(boardController.regenerateInviteLink)
 );
 
+/**
+ * -------------------------
+ *   DISABLE BOARD INVITE LINK
+ * -------------------------
+ * Quyền board: admin
+ */
 boardRegistry.registerPath({
   method: "post",
   path: "/api/board/:id/invite/disable",
@@ -179,16 +252,22 @@ boardRegistry.registerPath({
 });
 
 router.post(
-  "/:id/invite/disable",
+  "/:board_id/invite/disable",
   authMiddleware,
   validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin"]),
   asyncHandler(boardController.disableInviteLink)
 );
 
+/**
+ * -------------------------
+ *   JOIN BOARD VIA INVITE LINK
+ * -------------------------
+ * Mọi người (không cần là member của workspace hoặc board)
+ */
 boardRegistry.registerPath({
   method: "post",
-  path: "/api/board/:id/invite/join",
+  path: "/api/board/invite/:invite_token",
   tags: ["Board"],
   security: [{ BearerAuth: [] }],
   request: { params: BoardSchema.GetById },
@@ -202,6 +281,12 @@ router.post(
   asyncHandler(boardController.joinViaInviteLink)
 );
 
+/**
+ * -------------------------
+ *   INVITE MEMBER TO BOARD VIA EMAIL
+ * -------------------------
+ * Quyền board: admin, member
+ */
 boardRegistry.registerPath({
   method: "post",
   path: "/api/board/:id/invation-email",
@@ -217,12 +302,18 @@ boardRegistry.registerPath({
 });
 
 router.post(
-  "/:id/invation-email",
+  "/:board_id/invation-email",
   authMiddleware,
   validateRequest(BoardSchema.InviteEmail),
   asyncHandler(boardController.inviteMember)
 );
 
+/**
+ * -------------------------
+ *   ACCEPT BOARD INVITATION VIA EMAIL
+ * -------------------------
+ * Mọi người (không cần là member của workspace hoặc board)
+ */
 boardRegistry.registerPath({
   method: "get",
   path: "/api/board/invite-email/accept",
@@ -232,6 +323,48 @@ boardRegistry.registerPath({
 
 router.get(
   "/invite-email/accept",
+  authMiddleware,
   asyncHandler(boardController.acceptInvitation)
 );
+
+/** 
+ *  -------------------------
+ *     ARCHIVE BOARD & UNARCHIVE BOARD
+ *  -------------------------
+ *  Quyền board: admin
+ */
+boardRegistry.registerPath({
+  method: "post",
+  path: "/api/board/:id/archive",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: { params: BoardSchema.Archive },
+  responses: createApiResponse(z.null(), "Archive board"),
+})
+
+router.post(
+  "/archive/:board_id",
+  authMiddleware,
+  authorizeBoard(["admin"]),
+  validateRequest(BoardSchema.Archive, "params"),
+  asyncHandler(boardController.archive)
+)
+
+boardRegistry.registerPath({
+  method: "post",
+  path: "/api/board/:id/unarchive",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: { params: BoardSchema.Unarchive },
+  responses: createApiResponse(z.null(), "Unarchive board"),
+})
+
+router.post(
+  "/unarchive/:board_id",
+  authMiddleware,
+  authorizeBoard(["admin"]),
+  validateRequest(BoardSchema.Unarchive, "params"),
+  asyncHandler(boardController.unarchive)
+)
+
 export default router;

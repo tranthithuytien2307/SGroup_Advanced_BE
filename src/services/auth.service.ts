@@ -44,16 +44,16 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        role: user.role,
         email: user.email,
         role_id: user.role_id,
+        role: user.role,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
-        role: user.role,
         email: user.email,
         role_id: user.role_id,
+        role: user.role,
       });
 
       user.refreshToken = refreshToken;
@@ -114,16 +114,16 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        role: user.role,
         email: user.email,
         role_id: user.role_id,
+        role: user.role,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
-        role: user.role,
         email: user.email,
         role_id: user.role_id,
+        role: user.role,
       });
 
       await authModel.updateRefreshToken(user.id, refreshToken);
@@ -211,9 +211,9 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        role: user.role,
         email: user.email,
         role_id: user.role_id,
+        role: user.role,
       });
 
       return { accessToken };

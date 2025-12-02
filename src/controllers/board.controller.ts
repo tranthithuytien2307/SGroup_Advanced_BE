@@ -23,9 +23,12 @@ class BoardController {
   };
 
   getById = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
-      throw new BadRequestError("Invalid board id");
+      throw new BadRequestError("Invalid Board Id");
+    }
+    if (!id) {
+      throw new NotFoundError("Board not found");
     }
     const data = await boardService.getById(id);
     if (!data) {
@@ -71,16 +74,25 @@ class BoardController {
   };
 
   update = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
-      throw new BadRequestError("Invalid board id");
+      throw new BadRequestError("Invalid Board Id");
     }
-    const { name, cover_url, description } = req.body;
+    if (!id) {
+      throw new NotFoundError("Board not found");
+    }
+    const {
+      name,
+      cover_url,
+      description,
+      theme,
+    } = req.body;
     const data = await boardService.updateBoard(
       id,
       name,
       cover_url,
-      description
+      description,
+      theme,
     );
     if (!data) {
       throw new NotFoundError("Board not found");
@@ -96,10 +108,68 @@ class BoardController {
     );
   };
 
-  delete = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+  updateVisibility = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
-      throw new BadRequestError("Invalid board id");
+      throw new BadRequestError("Invalid Board Id");
+    }
+    if (!id) {
+      throw new NotFoundError("Board not found");
+    }
+    const { visibility } = req.body;
+    const data = await boardService.updateVisibility(id, visibility);
+    if (!data) {
+      throw new NotFoundError("Board not found");
+    }
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Board visibility updated successfully",
+        data,
+        200
+      ),
+      res
+    );
+  }
+
+  archive = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.board_id, 10);
+    if (Number.isNaN(id)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+    const data = await boardService.archiveBoard(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Board archived successfully",
+        data,
+        200
+      ),
+      res
+    );
+  }
+
+  unarchive = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.board_id, 10);
+    if (Number.isNaN(id)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+    const data = await boardService.unarchiveBoard(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Board unarchived successfully",
+        data,
+        200
+      ),
+      res
+    );
+  }
+
+  delete = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.board_id, 10);
+    if (Number.isNaN(id)) {
+      throw new BadRequestError("Invalid Board Id");
     }
     await boardService.deleteBoard(id);
     return handleServiceResponse(
@@ -116,7 +186,7 @@ class BoardController {
   getByWorkspaceId = async (req: Request, res: Response) => {
     const workspaceId = parseInt(req.params.workspace_id, 10);
     if (Number.isNaN(workspaceId)) {
-      throw new BadRequestError("Invalid workspace id");
+      throw new BadRequestError("Invalid Workspace Id");
     }
     const data = await boardService.getBoardsByWorkspaceId(workspaceId);
     if (!data || data.length === 0) {
@@ -134,7 +204,7 @@ class BoardController {
   };
 
   changeOwner = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
       throw new BadRequestError("Ivalid board id");
     }
@@ -159,7 +229,7 @@ class BoardController {
   };
 
   inviteLink = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
       throw new BadRequestError("Invalid board id");
     }
@@ -179,7 +249,7 @@ class BoardController {
   };
 
   regenerateInviteLink = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
       throw new BadRequestError("Invalid board id");
     }
@@ -199,7 +269,7 @@ class BoardController {
   };
 
   disableInviteLink = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
       throw new BadRequestError("Invalid board id");
     }
@@ -240,7 +310,7 @@ class BoardController {
   };
 
   inviteMember = async (req: Request, res: Response) => {
-    const boardId = parseInt(req.params.id, 10);
+    const boardId = parseInt(req.params.board_id, 10);
     const { email } = req.body;
     const inviterId = Number((req as any).user.id);
     const role = "member";

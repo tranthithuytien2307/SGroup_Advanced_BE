@@ -36,7 +36,7 @@ workspaceRegistry.registerPath({
 });
 
 router.get(
-  "/:id",
+  "/:workspace_id",
   authMiddleware,
   validateRequest(WorkspaceSchema.GetById),
   authorizeWorkspace(["owner", "admin", "member", "viewer"]),
@@ -78,7 +78,7 @@ workspaceRegistry.registerPath({
 });
 
 router.put(
-  "/:id",
+  "/:workspace_id",
   authMiddleware,
   validateRequest(WorkspaceSchema.Update),
   authorizeWorkspace(["owner", "admin", "member"]),
@@ -95,7 +95,7 @@ workspaceRegistry.registerPath({
 });
 
 router.delete(
-  "/:id",
+  "/:workspace_id",
   authMiddleware,
   validateRequest(WorkspaceSchema.Delete),
   authorizeWorkspace(["owner"]),
