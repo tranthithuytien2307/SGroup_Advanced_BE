@@ -13,7 +13,7 @@ import { WorkspaceMember } from "./workspace-member.entity";
 import { Board } from "./board.entity";
 import { WorkspaceInvitation } from "./workspace-invitations.entity";
 import { Role } from "./role.entity";
-import { BoardTemplate } from "./board-template.entity";
+import { BoardTemplate } from "./template.entity";
 
 @Entity("users")
 export class User {

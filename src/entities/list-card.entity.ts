@@ -7,9 +7,9 @@ import {
   JoinColumn,
 } from "typeorm";
 import { Board } from "./board.entity";
-import { BoardCard } from "./board-card.entity";
+import { Card } from "./card.entity";
 @Entity("board_lists")
-export class BoardList {
+export class ListCard {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -26,6 +26,6 @@ export class BoardList {
   @Column({ default: 0 })
   position!: number;
 
-  @OneToMany(() => BoardCard, (c) => c.list)
-  cards!: BoardCard[];
+  @OneToMany(() => Card, (c) => c.list)
+  cards!: Card[];
 }

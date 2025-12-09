@@ -6,7 +6,7 @@ import {
   OneToMany,
   JoinColumn,
 } from "typeorm";
-import { BoardTemplate } from "./board-template.entity";
+import { BoardTemplate } from "./template.entity";
 import { TemplateCard } from "./template-card.entity";
 
 @Entity("template_lists")

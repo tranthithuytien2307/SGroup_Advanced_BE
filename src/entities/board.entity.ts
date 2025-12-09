@@ -12,7 +12,7 @@ import { Workspace } from "./workspace.entity";
 import { User } from "./user.entity";
 import { BoardMember } from "./board-member.entity";
 import { BoardInvitation } from "./board_invitations.entity";
-import { BoardList } from "./board-list.entity";
+import { BoardList } from "./list-card.entity";
 
 @Entity("boards")
 export class Board {

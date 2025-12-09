@@ -1,10 +1,9 @@
 import { AppDataSource } from "../data-source";
 import templateModel from "../model/template.model";
-import boardModel from "../model/board.model";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
-import { BoardList } from "../entities/board-list.entity";
-import { BoardCard } from "../entities/board-card.entity";
+import { ListCard } from "../entities/list-card.entity";
+import { Card } from "../entities/card.entity";
 import { Board } from "../entities/board.entity";
 import {
   InternalServerError,
@@ -54,26 +53,26 @@ class TemplateService {
       } as Partial<Board>);
       const savedBoard = await boardRepo.save(newBoard);
 
-      const boardListRepo = queryRunner.manager.getRepository(BoardList);
-      const boardCardRepo = queryRunner.manager.getRepository(BoardCard);
+      const ListCardRepo = queryRunner.manager.getRepository(ListCard);
+      const boardCardRepo = queryRunner.manager.getRepository(Card);
 
       const listMap = new Map<number, number>();
 
       const listsToCreate = (template.lists || []).map((tl: TemplateList) =>
-        boardListRepo.create({
+        ListCardRepo.create({
           board_id: savedBoard.id,
           name: tl.name,
           position: tl.position,
-        } as Partial<BoardList>)
+        } as Partial<ListCard>)
       );
-      const createdLists = await boardListRepo.save(listsToCreate);
+      const createdLists = await ListCardRepo.save(listsToCreate);
 
       createdLists.forEach((bl, idx) => {
         const tplId = template.lists[idx].id;
         listMap.set(tplId, bl.id);
       });
 
-      const cardsToCreate: Partial<BoardCard>[] = [];
+      const cardsToCreate: Partial<Card>[] = [];
       for (const tplList of template.lists) {
         const newListId = listMap.get(tplList.id);
         if (!newListId) continue;
@@ -83,7 +82,7 @@ class TemplateService {
               list_id: newListId,
               title: card.title,
               description: card.description,
-            } as Partial<BoardCard>)
+            } as Partial<Card>)
           );
         }
       }

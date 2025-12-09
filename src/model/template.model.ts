@@ -1,5 +1,5 @@
 import { AppDataSource } from "../data-source";
-import { BoardTemplate } from "../entities/board-template.entity";
+import { Template } from "../entities/template.entity";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
 import { Board } from "../entities/board.entity";
@@ -7,7 +7,7 @@ import { WorkspaceMember } from "../entities/workspace-member.entity";
 import { In } from "typeorm";
 
 class TemplateModel {
-  private tplRepo = AppDataSource.getRepository(BoardTemplate);
+  private tplRepo = AppDataSource.getRepository(Template);
   private listRepo = AppDataSource.getRepository(TemplateList);
   private cardRepo = AppDataSource.getRepository(TemplateCard);
   private workspaceMemberRepo = AppDataSource.getRepository(WorkspaceMember);
@@ -20,7 +20,7 @@ class TemplateModel {
     });
   }
 
-  async create(data: Partial<BoardTemplate>) {
+  async create(data: Partial<Template>) {
     const t = this.tplRepo.create(data);
     return this.tplRepo.save(t);
   }

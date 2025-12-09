@@ -5,19 +5,19 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { BoardList } from "./board-list.entity";
+import { ListCard } from "./list-card.entity";
 
-@Entity("board_cards")
-export class BoardCard {
+@Entity("cards")
+export class Card {
   @PrimaryGeneratedColumn()
   id!: number;
 
   @Column()
   list_id!: number;
 
-  @ManyToOne(() => BoardList, (l) => l.cards, { onDelete: "CASCADE" })
+  @ManyToOne(() => ListCard, (l) => l.cards, { onDelete: "CASCADE" })
   @JoinColumn({ name: "list_id" })
-  list!: BoardList;
+  list!: ListCard;
 
   @Column()
   title!: string;

@@ -4,7 +4,7 @@ import { BoardMember, BoardRole } from "../entities/board-member.entity";
 import { BoardInvitation } from "../entities/board_invitations.entity";
 import { WorkspaceInvitation } from "../entities/workspace-invitations.entity";
 import { User } from "../entities/user.entity";
-import { BoardTemplate } from "../entities/board-template.entity";
+import { BoardTemplate } from "../entities/template.entity";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
 
