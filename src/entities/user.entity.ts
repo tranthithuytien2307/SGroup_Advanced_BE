@@ -13,6 +13,7 @@ import { WorkspaceMember } from "./workspace-member.entity";
 import { Board } from "./board.entity";
 import { WorkspaceInvitation } from "./workspace-invitations.entity";
 import { Role } from "./role.entity";
+import { BoardTemplate } from "./board-template.entity";
 
 @Entity("users")
 export class User {
@@ -78,4 +79,7 @@ export class User {
 
   @OneToMany(() => WorkspaceInvitation, (inv) => inv.invited_by)
   sentInvitations!: WorkspaceInvitation[];
+
+  @OneToMany(() => BoardTemplate, (t) => t.owner)
+  templates!: BoardTemplate[];
 }
