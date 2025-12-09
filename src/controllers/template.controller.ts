@@ -8,13 +8,14 @@ class TemplateController {
   createBoardFromTemplate = async (req: Request, res: Response) => {
     const templateId = Number(req.params.templateId);
     const ownerId = Number((req as any).user.id);
-    const { boardName, visibility } = req.body;
+    const { boardName, visibility, workspaceId } = req.body;
 
     const newBoard = await templateService.createBoardFromTemplate({
       templateId,
       ownerId,
       boardName,
       visibility,
+      workspaceId
     });
 
     return handleServiceResponse(

@@ -6,15 +6,18 @@ import { TemplateCard } from "../entities/template-card.entity";
 import { BoardList } from "../entities/board-list.entity";
 import { BoardCard } from "../entities/board-card.entity";
 import { Board } from "../entities/board.entity";
-import { InternalServerError } from "../handler/error.response";
+import {
+  InternalServerError,
+  NotFoundError,
+  ForbiddenError,
+} from "../handler/error.response";
 
 class TemplateService {
-
   async getAll() {
     try {
       return await templateModel.getAll();
     } catch (error) {
-      console.error("Template error:", error); 
+      console.error("Template error:", error);
       throw new InternalServerError("Failed to fetch templates");
     }
   }
@@ -23,11 +26,19 @@ class TemplateService {
     templateId: number;
     ownerId: number;
     boardName?: string;
+    workspaceId: number;
     visibility?: "private" | "workspace" | "public";
   }) {
-    const { templateId, ownerId, boardName, visibility } = params;
+    const { templateId, ownerId, workspaceId, boardName, visibility } = params;
+
     const template = await templateModel.findById(templateId);
-    if (!template) throw new Error("Template not found");
+    if (!template) throw new NotFoundError("Template not found");
+
+    if (!workspaceId) throw new NotFoundError("Not found workspaceId");
+
+    const isMember = await templateModel.isUserMember(workspaceId, ownerId);
+    if (!isMember)
+      throw new ForbiddenError("User is not owner/admin of this workspace");
 
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
@@ -37,23 +48,24 @@ class TemplateService {
       const boardRepo = queryRunner.manager.getRepository(Board);
       const newBoard = boardRepo.create({
         name: boardName || template.name,
-        owner_id: ownerId,
+        created_by_id: ownerId,
+        workspace_id: workspaceId,
         visibility: visibility || "private",
       } as Partial<Board>);
       const savedBoard = await boardRepo.save(newBoard);
+
       const boardListRepo = queryRunner.manager.getRepository(BoardList);
       const boardCardRepo = queryRunner.manager.getRepository(BoardCard);
 
       const listMap = new Map<number, number>();
 
-      const listsToCreate = (template.lists || []).map((tl: TemplateList) => {
-        return boardListRepo.create({
+      const listsToCreate = (template.lists || []).map((tl: TemplateList) =>
+        boardListRepo.create({
           board_id: savedBoard.id,
           name: tl.name,
           position: tl.position,
-        } as Partial<BoardList>);
-      });
-
+        } as Partial<BoardList>)
+      );
       const createdLists = await boardListRepo.save(listsToCreate);
 
       createdLists.forEach((bl, idx) => {
@@ -75,7 +87,6 @@ class TemplateService {
           );
         }
       }
-
       if (cardsToCreate.length > 0) {
         await boardCardRepo.save(cardsToCreate);
       }

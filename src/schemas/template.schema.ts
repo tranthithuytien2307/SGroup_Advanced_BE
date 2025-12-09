@@ -31,9 +31,13 @@ export const TemplateSchema = {
           description: "Visibility level of the new board",
           example: "workspace",
         }),
+      workspaceId: z.number().int().positive().openapi({
+        description: "ID of the workspace where the new board will be created",
+        example: 6,
+      }),
     })
     .openapi("CreateBoardFromTemplateBody"),
-  
+
   GetAllTemplates: z
     .array(
       z.object({
@@ -48,6 +52,10 @@ export const TemplateSchema = {
     .openapi("GetAllTemplatesResponse"),
 };
 
-export type CreateFromTemplateParams = z.infer<typeof TemplateSchema.CreateFromTemplateParams>;
-export type CreateFromTemplateBody = z.infer<typeof TemplateSchema.CreateFromTemplateBody>;
+export type CreateFromTemplateParams = z.infer<
+  typeof TemplateSchema.CreateFromTemplateParams
+>;
+export type CreateFromTemplateBody = z.infer<
+  typeof TemplateSchema.CreateFromTemplateBody
+>;
 export type GetAllTemplates = z.infer<typeof TemplateSchema.GetAllTemplates>;
