@@ -6,7 +6,7 @@ extendZodWithOpenApi(z);
 export const WorkspaceSchema = {
   GetById: z
     .object({
-      id: z.string().regex(/^\d+$/, "Workspace ID must be a number").openapi({
+      workspace_id: z.string().regex(/^\d+$/, "Workspace ID must be a number").openapi({
         description: "Workspace ID",
       }),
     })

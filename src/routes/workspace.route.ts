@@ -38,7 +38,7 @@ workspaceRegistry.registerPath({
 router.get(
   "/:workspace_id",
   authMiddleware,
-  validateRequest(WorkspaceSchema.GetById),
+  validateRequest(WorkspaceSchema.GetById, 'params'),
   authorizeWorkspace(["owner", "admin", "member", "viewer"]),
   asyncHandler(workspaceController.getWorkspaceById)
 );

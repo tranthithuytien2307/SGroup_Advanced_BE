@@ -18,7 +18,7 @@ class WorkspaceController {
   };
 
   getWorkspaceById = async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.workspace_id, 10);
     if (Number.isNaN(id)) {
       throw new NotFoundError("Invalid workspace id");
     }

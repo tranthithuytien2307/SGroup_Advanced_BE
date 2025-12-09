@@ -10,7 +10,6 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
 
-
 export const boardRegistry = new OpenAPIRegistry();
 const router = Router();
 
@@ -23,7 +22,7 @@ const router = Router();
 
 boardRegistry.registerPath({
   method: "get",
-  path: "/api/boards",
+  path: "/api/board",
   tags: ["Board"],
   security: [{ BearerAuth: [] }],
   responses: createApiResponse(z.null(), "Get all boards"),
@@ -32,7 +31,7 @@ boardRegistry.registerPath({
 router.get(
   "/",
   authMiddleware,
-  authorizeBoard(["admin", "member", "viewer"]),  
+  authorizeWorkspace(["owner", "admin", "member", "viewer"]),
   asyncHandler(boardController.getAll)
 );
 
@@ -56,7 +55,7 @@ router.get(
   "/:board_id",
   authMiddleware,
   authorizeBoard(["admin", "member", "viewer"]),
-  validateRequest(BoardSchema.GetById),
+  validateRequest(BoardSchema.GetById, "params"),
   asyncHandler(boardController.getById)
 );
 
@@ -161,7 +160,6 @@ router.get(
   asyncHandler(boardController.getByWorkspaceId)
 );
 
-
 /**
  * -------------------------
  *    CHANGE BOARD OWNER
@@ -189,7 +187,6 @@ router.put(
   authorizeBoard(["admin"]),
   asyncHandler(boardController.changeOwner)
 );
-
 
 /**
  * -------------------------
@@ -327,7 +324,7 @@ router.get(
   asyncHandler(boardController.acceptInvitation)
 );
 
-/** 
+/**
  *  -------------------------
  *     ARCHIVE BOARD & UNARCHIVE BOARD
  *  -------------------------
@@ -340,7 +337,7 @@ boardRegistry.registerPath({
   security: [{ BearerAuth: [] }],
   request: { params: BoardSchema.Archive },
   responses: createApiResponse(z.null(), "Archive board"),
-})
+});
 
 router.post(
   "/archive/:board_id",
@@ -348,7 +345,7 @@ router.post(
   authorizeBoard(["admin"]),
   validateRequest(BoardSchema.Archive, "params"),
   asyncHandler(boardController.archive)
-)
+);
 
 boardRegistry.registerPath({
   method: "post",
@@ -357,7 +354,7 @@ boardRegistry.registerPath({
   security: [{ BearerAuth: [] }],
   request: { params: BoardSchema.Unarchive },
   responses: createApiResponse(z.null(), "Unarchive board"),
-})
+});
 
 router.post(
   "/unarchive/:board_id",
@@ -365,6 +362,6 @@ router.post(
   authorizeBoard(["admin"]),
   validateRequest(BoardSchema.Unarchive, "params"),
   asyncHandler(boardController.unarchive)
-)
+);
 
 export default router;

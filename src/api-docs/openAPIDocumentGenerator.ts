@@ -4,6 +4,7 @@ import { healthCheckRegistry } from "../routes/health.route";
 import { workspaceMemberRegistry } from "../routes/workspace-member.route";
 import { userRegistry } from "../routes/user.route";
 import { workspaceRegistry } from "../routes/workspace.route";
+import { templateRegistry } from "../routes/template.route";
 import {
   OpenApiGeneratorV3,
   OpenAPIRegistry,
@@ -19,6 +20,7 @@ export function generateOpenAPIDocument(): ReturnType<
     workspaceRegistry,
     boardRegistry,
     workspaceMemberRegistry,
+    templateRegistry
   ]);
 
   registry.registerComponent("securitySchemes", "BearerAuth", {
