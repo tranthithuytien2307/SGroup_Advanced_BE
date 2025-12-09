@@ -110,12 +110,16 @@ class BoardService {
   ): Promise<Board> {
     try {
       const board = await boardModel.getById(id);
-      if (!board) {
-        throw new NotFoundError("Board not found");
-      }
+      if (!board) throw new NotFoundError("Board not found");
 
       board.visibility = visibility;
-      return await boardModel.updateBoard(board);
+      const updatedBoard = await boardModel.updateBoard(board);
+
+      if (visibility === "public") {
+        await boardModel.saveBoardAsTemplate(updatedBoard.id);
+      }
+
+      return updatedBoard;
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to update board visibility");
@@ -322,7 +326,7 @@ class BoardService {
       throw new InternalServerError("Failed to accept invitation");
     }
   }
-  
+
   async archiveBoard(id: number): Promise<Board> {
     try {
       // Validate board exists

@@ -4,6 +4,9 @@ import { BoardMember, BoardRole } from "../entities/board-member.entity";
 import { BoardInvitation } from "../entities/board_invitations.entity";
 import { WorkspaceInvitation } from "../entities/workspace-invitations.entity";
 import { User } from "../entities/user.entity";
+import { BoardTemplate } from "../entities/board-template.entity";
+import { TemplateList } from "../entities/template-list.entity";
+import { TemplateCard } from "../entities/template-card.entity";
 
 class BoardModel {
   private boardRepository = AppDataSource.getRepository(Board);
@@ -11,6 +14,9 @@ class BoardModel {
   private userRepository = AppDataSource.getRepository(User);
   private boardInvitationRepository =
     AppDataSource.getRepository(BoardInvitation);
+  private templateRepository = AppDataSource.getRepository(BoardTemplate);
+  private templateListRepository = AppDataSource.getRepository(TemplateList);
+  private templateCardRepository = AppDataSource.getRepository(TemplateCard);
 
   async getAll(): Promise<Board[]> {
     return await this.boardRepository.find({
@@ -263,6 +269,70 @@ class BoardModel {
       console.error("Error in createMember:", error);
       throw new Error("Failed to create workspace member");
     }
+  }
+
+  async saveBoardAsTemplate(boardId: number) {
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+      relations: ["lists", "lists.cards"],
+    });
+
+    if (!board || !board.created_by_id) {
+      throw new Error("Board not found or has no creator");
+    }
+
+    const template = this.templateRepository.create({
+      name: board.name,
+      created_by_id: board.created_by_id,
+      owner: { id: board.created_by_id },
+      description: board.description ?? null,
+      cover_url: board.cover_url ?? null,
+      theme: board.theme ?? null,
+    });
+
+    const savedTemplate = await this.templateRepository.save(template);
+
+    const templateLists = board.lists.map((list) =>
+      this.templateListRepository.create({
+        template_id: savedTemplate.id,
+        name: list.name,
+        position: list.position,
+      })
+    );
+
+    const createdTemplateLists = await this.templateListRepository.save(
+      templateLists
+    );
+
+    const listMap = new Map<number, number>();
+    createdTemplateLists.forEach((tplList, index) => {
+      listMap.set(board.lists[index].id, tplList.id);
+    });
+
+    const cardsToCreate = [];
+
+    for (const list of board.lists) {
+      const newTplListId = listMap.get(list.id);
+      if (!newTplListId) continue;
+
+      if (list.cards?.length) {
+        for (const card of list.cards) {
+          cardsToCreate.push(
+            this.templateCardRepository.create({
+              list_id: newTplListId,
+              title: card.title,
+              description: card.description ?? null,
+            })
+          );
+        }
+      }
+    }
+
+    if (cardsToCreate.length > 0) {
+      await this.templateCardRepository.save(cardsToCreate);
+    }
+
+    return savedTemplate;
   }
 }
 
