@@ -2,7 +2,7 @@ import { AppDataSource } from "../data-source";
 import templateModel from "../model/template.model";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
-import { ListCard } from "../entities/list-card.entity";
+import { List } from "../entities/list.entity";
 import { Card } from "../entities/card.entity";
 import { Board } from "../entities/board.entity";
 import {
@@ -53,19 +53,19 @@ class TemplateService {
       } as Partial<Board>);
       const savedBoard = await boardRepo.save(newBoard);
 
-      const ListCardRepo = queryRunner.manager.getRepository(ListCard);
-      const boardCardRepo = queryRunner.manager.getRepository(Card);
+      const listRepo = queryRunner.manager.getRepository(List);
+      const cardRepo = queryRunner.manager.getRepository(Card);
 
       const listMap = new Map<number, number>();
 
       const listsToCreate = (template.lists || []).map((tl: TemplateList) =>
-        ListCardRepo.create({
+        listRepo.create({
           board_id: savedBoard.id,
           name: tl.name,
           position: tl.position,
-        } as Partial<ListCard>)
+        } as Partial<List>)
       );
-      const createdLists = await ListCardRepo.save(listsToCreate);
+      const createdLists = await listRepo.save(listsToCreate);
 
       createdLists.forEach((bl, idx) => {
         const tplId = template.lists[idx].id;
@@ -78,7 +78,7 @@ class TemplateService {
         if (!newListId) continue;
         for (const card of tplList.cards || []) {
           cardsToCreate.push(
-            boardCardRepo.create({
+            cardRepo.create({
               list_id: newListId,
               title: card.title,
               description: card.description,
@@ -87,7 +87,7 @@ class TemplateService {
         }
       }
       if (cardsToCreate.length > 0) {
-        await boardCardRepo.save(cardsToCreate);
+        await cardRepo.save(cardsToCreate);
       }
 
       await queryRunner.commitTransaction();

@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { ListCard } from "./list-card.entity";
+import { List } from "./list.entity";
 
 @Entity("cards")
 export class Card {
@@ -15,12 +15,15 @@ export class Card {
   @Column()
   list_id!: number;
 
-  @ManyToOne(() => ListCard, (l) => l.cards, { onDelete: "CASCADE" })
+  @ManyToOne(() => List, (l) => l.cards, { onDelete: "CASCADE" })
   @JoinColumn({ name: "list_id" })
-  list!: ListCard;
+  list!: List;
 
   @Column()
   title!: string;
+
+  @Column({ type: "float", default: 0 })
+  position!: number;
 
   @Column({ type: "text", nullable: true })
   description!: string | null;

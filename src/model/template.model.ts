@@ -1,5 +1,5 @@
 import { AppDataSource } from "../data-source";
-import { Template } from "../entities/template.entity";
+import { TemplateBoard } from "../entities/template-board.entity";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
 import { Board } from "../entities/board.entity";
@@ -7,42 +7,41 @@ import { WorkspaceMember } from "../entities/workspace-member.entity";
 import { In } from "typeorm";
 
 class TemplateModel {
-  private tplRepo = AppDataSource.getRepository(Template);
-  private listRepo = AppDataSource.getRepository(TemplateList);
-  private cardRepo = AppDataSource.getRepository(TemplateCard);
-  private workspaceMemberRepo = AppDataSource.getRepository(WorkspaceMember);
-
+  private templateBoardRepository = AppDataSource.getRepository(TemplateBoard);
+  private templateListRepository = AppDataSource.getRepository(TemplateList);
+  private templateCardRepository = AppDataSource.getRepository(TemplateCard);
+  private workspaceMemberRepository = AppDataSource.getRepository(WorkspaceMember);
   async findById(id: number) {
-    return this.tplRepo.findOne({
+    return this.templateBoardRepository.findOne({
       where: { id },
       relations: ["lists", "lists.cards"],
       order: { id: "ASC" },
     });
   }
 
-  async create(data: Partial<Template>) {
-    const t = this.tplRepo.create(data);
-    return this.tplRepo.save(t);
+  async create(data: Partial<TemplateBoard>) {
+    const t = this.templateBoardRepository.create(data);
+    return this.templateBoardRepository.save(t);
   }
 
   async createLists(lists: Partial<TemplateList>[]) {
-    const items = this.listRepo.create(lists);
-    return this.listRepo.save(items);
+    const items = this.templateListRepository.create(lists);
+    return this.templateListRepository.save(items);
   }
 
   async createCards(cards: Partial<TemplateCard>[]) {
-    const items = this.cardRepo.create(cards);
-    return this.cardRepo.save(items);
+    const items = this.templateCardRepository.create(cards);
+    return this.templateCardRepository.save(items);
   }
 
   async getAll() {
-    return await this.tplRepo.find({
+    return await this.templateBoardRepository.find({
       order: { id: "DESC" },
     });
   }
 
   async isUserMember(workspaceId: number, userId: number): Promise<boolean> {
-    const member = await this.workspaceMemberRepo.findOne({
+    const member = await this.workspaceMemberRepository.findOne({
       where: {
         workspace: { id: workspaceId },
         user: { id: userId },
@@ -55,7 +54,7 @@ class TemplateModel {
     workspaceId: number,
     userId: number
   ): Promise<boolean> {
-    const member = await this.workspaceMemberRepo.findOne({
+    const member = await this.workspaceMemberRepository.findOne({
       where: {
         workspace: { id: workspaceId },
         user: { id: userId },

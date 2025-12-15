@@ -4,7 +4,7 @@ import { BoardMember, BoardRole } from "../entities/board-member.entity";
 import { BoardInvitation } from "../entities/board_invitations.entity";
 import { WorkspaceInvitation } from "../entities/workspace-invitations.entity";
 import { User } from "../entities/user.entity";
-import { BoardTemplate } from "../entities/template.entity";
+import { TemplateBoard } from "../entities/template-board.entity";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
 
@@ -14,7 +14,7 @@ class BoardModel {
   private userRepository = AppDataSource.getRepository(User);
   private boardInvitationRepository =
     AppDataSource.getRepository(BoardInvitation);
-  private templateRepository = AppDataSource.getRepository(BoardTemplate);
+  private templateBoardRepository = AppDataSource.getRepository(TemplateBoard);
   private templateListRepository = AppDataSource.getRepository(TemplateList);
   private templateCardRepository = AppDataSource.getRepository(TemplateCard);
 
@@ -281,7 +281,7 @@ class BoardModel {
       throw new Error("Board not found or has no creator");
     }
 
-    const template = this.templateRepository.create({
+    const template = this.templateBoardRepository.create({
       name: board.name,
       created_by_id: board.created_by_id,
       owner: { id: board.created_by_id },
@@ -290,7 +290,7 @@ class BoardModel {
       theme: board.theme ?? null,
     });
 
-    const savedTemplate = await this.templateRepository.save(template);
+    const savedTemplate = await this.templateBoardRepository.save(template);
 
     const templateLists = board.lists.map((list) =>
       this.templateListRepository.create({
