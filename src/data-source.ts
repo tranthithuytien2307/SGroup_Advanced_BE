@@ -10,6 +10,12 @@ import { BoardMember } from "./entities/board-member.entity";
 import { Role } from "./entities/role.entity";
 import { Permission } from "./entities/permission.entity";
 import { RolePermission } from "./entities/role-permission.entity";
+import { BoardInvitation } from "./entities/board_invitations.entity";
+import { ListCard } from "./entities/list-card.entity";
+import { Card } from "./entities/card.entity";
+import { Template } from "./entities/template.entity";
+import { TemplateList } from "./entities/template-list.entity";
+import { TemplateCard } from "./entities/template-card.entity";
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -21,5 +27,21 @@ export const AppDataSource = new DataSource({
   database: "mydb",
   synchronize: true,
   logging: true,
-  entities: [User, Workspace, Board, WorkspaceMember, BoardMember, WorkspaceInvitation, Role, Permission, RolePermission],
+  entities: [
+    User,
+    Workspace,
+    Board,
+    WorkspaceMember,
+    BoardMember,
+    WorkspaceInvitation,
+    Role,
+    Permission,
+    RolePermission,
+    BoardInvitation,
+    ListCard,
+    Card,
+    Template,
+    TemplateList,
+    TemplateCard,
+  ],
 });

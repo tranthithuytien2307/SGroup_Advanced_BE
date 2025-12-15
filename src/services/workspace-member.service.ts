@@ -1,7 +1,6 @@
 import workspaceMemberModel from "../model/workspace-member.model";
 import {
   BadRequestError,
-  ErrorResponse,
   InternalServerError,
   NotFoundError,
 } from "../handler/error.response";
@@ -9,7 +8,6 @@ import mailService from "./mail.service";
 import crypto from "crypto";
 
 export class WorkspaceMemberService {
-
   async createInvitation(
     workspaceId: number,
     email: string,
@@ -17,25 +15,32 @@ export class WorkspaceMemberService {
     inviterId: number
   ) {
     try {
-      const workspace = await workspaceMemberModel.findWorkspaceById(
-        workspaceId
-      );
-      if (!workspace) throw new NotFoundError("Workspace not found");
+      // Validate workspace exists
+      const workspace = await workspaceMemberModel.findWorkspaceById(workspaceId);
+      if (!workspace) {
+        throw new NotFoundError("Workspace not found");
+      }
 
+      // Check if user is already a member
       const existingMember = await workspaceMemberModel.findMemberByEmail(
         workspaceId,
         email
       );
-      if (existingMember) throw new BadRequestError("User already a member");
+      if (existingMember) {
+        throw new BadRequestError("User already a member");
+      }
 
+      // Check if invitation already exists
       const existingInvite = await workspaceMemberModel.findExistingInvitation(
         workspaceId,
         email
       );
-      if (existingInvite) throw new BadRequestError("Invitation already sent");
+      if (existingInvite) {
+        throw new BadRequestError("Invitation already sent");
+      }
 
+      // Generate token and create invitation
       const token = crypto.randomUUID();
-
       const invitation = await workspaceMemberModel.createInvitation(
         email,
         workspace,
@@ -45,11 +50,17 @@ export class WorkspaceMemberService {
         inviterId
       );
 
+      // Send invitation email
       await mailService.sendInvitationEmail(email, token, workspace.name);
 
       return invitation;
     } catch (error) {
-      if (error instanceof ErrorResponse) throw error;
+      if (
+        error instanceof NotFoundError ||
+        error instanceof BadRequestError
+      ) {
+        throw error;
+      }
       console.error("Error in createInvitation:", error);
       throw new InternalServerError("Failed to create invitation");
     }
@@ -57,19 +68,23 @@ export class WorkspaceMemberService {
 
   async acceptInvitation(token: string) {
     try {
-      const invitation = await workspaceMemberModel.findInvitationByToken(
-        token
-      );
-      if (!invitation) throw new NotFoundError("Invalid or expired invitation");
+      // Validate invitation exists and is valid
+      const invitation = await workspaceMemberModel.findInvitationByToken(token);
+      if (!invitation) {
+        throw new NotFoundError("Invalid or expired invitation");
+      }
 
-      if (invitation.status === "accepted")
+      if (invitation.status === "accepted") {
         throw new BadRequestError("Invitation already accepted");
+      }
 
+      // Find or create user
       let user = await workspaceMemberModel.findUserByEmail(invitation.email);
       if (!user) {
         user = await workspaceMemberModel.createUser(invitation.email);
       }
 
+      // Check if already a member, if not create membership
       const existingMember = await workspaceMemberModel.findMemberByEmail(
         invitation.workspace_id,
         invitation.email
@@ -83,11 +98,17 @@ export class WorkspaceMemberService {
         );
       }
 
+      // Update invitation status
       await workspaceMemberModel.updateInvitationStatus(invitation, "accepted");
 
       return user;
     } catch (error) {
-      if (error instanceof ErrorResponse) throw error;
+      if (
+        error instanceof NotFoundError ||
+        error instanceof BadRequestError
+      ) {
+        throw error;
+      }
       console.error("Error in acceptInvitation:", error);
       throw new InternalServerError("Failed to accept invitation");
     }
@@ -99,15 +120,21 @@ export class WorkspaceMemberService {
     role: "owner" | "admin" | "member" | "viewer"
   ) {
     try {
+      // Validate member exists
       const member = await workspaceMemberModel.findMember(workspaceId, userId);
-      if (!member) throw new NotFoundError("Member not found");
+      if (!member) {
+        throw new NotFoundError("Member not found");
+      }
 
+      // Update role
       member.role = role;
       await workspaceMemberModel.saveMember(member);
 
       return member;
     } catch (error) {
-      if (error instanceof ErrorResponse) throw error;
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
       console.error("Error in updateRole:", error);
       throw new InternalServerError("Failed to update role");
     }
@@ -115,10 +142,9 @@ export class WorkspaceMemberService {
 
   async getMembers(workspaceId: number) {
     try {
-      const members = await workspaceMemberModel.getMembersByWorkspace(
-        workspaceId
-      );
+      const members = await workspaceMemberModel.getMembersByWorkspace(workspaceId);
 
+      // Format response
       return members.map((m) => ({
         id: m.user.id,
         name: m.user.name,
@@ -133,16 +159,19 @@ export class WorkspaceMemberService {
 
   async removeMember(workspaceId: number, userId: number) {
     try {
-      const deleted = await workspaceMemberModel.deleteMember(
-        workspaceId,
-        userId
-      );
-
-      if (!deleted)
+      // Validate member exists
+      const member = await workspaceMemberModel.findMember(workspaceId, userId);
+      if (!member) {
         throw new NotFoundError("Member not found in this workspace");
+      }
+
+      // Delete member
+      await workspaceMemberModel.deleteMember(member);
       return true;
     } catch (error) {
-      if (error instanceof ErrorResponse) throw error;
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
       console.error("Error in removeMember:", error);
       throw new InternalServerError("Failed to remove member");
     }

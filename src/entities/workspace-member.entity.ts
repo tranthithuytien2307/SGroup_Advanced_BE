@@ -23,7 +23,7 @@ export class WorkspaceMember {
   workspace!: Workspace;
 
   @Column({ 
-    type: "enum", 
+    type: "enum",
     enum: ["owner", "admin", "member", "viewer"], 
     default: "member" 
   })

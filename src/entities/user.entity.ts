@@ -13,6 +13,7 @@ import { WorkspaceMember } from "./workspace-member.entity";
 import { Board } from "./board.entity";
 import { WorkspaceInvitation } from "./workspace-invitations.entity";
 import { Role } from "./role.entity";
+import { Template } from "./template.entity";
 
 @Entity("users")
 export class User {
@@ -27,9 +28,6 @@ export class User {
 
   @Column({ type: "varchar", nullable: true })
   password!: string | null; // OAuth user can have null password
-
-  // @Column({ default: "user" })
-  // role!: string;
 
   @ManyToOne(() => Role)
   @JoinColumn({ name: "role_id" })
@@ -81,4 +79,7 @@ export class User {
 
   @OneToMany(() => WorkspaceInvitation, (inv) => inv.invited_by)
   sentInvitations!: WorkspaceInvitation[];
+
+  @OneToMany(() => Template, (t) => t.owner)
+  templates!: Template[];
 }
