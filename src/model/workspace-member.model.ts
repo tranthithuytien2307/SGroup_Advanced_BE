@@ -22,6 +22,19 @@ class WorkspaceMemberModel {
     return await this.userRepo.findOne({ where: { id } });
   }
 
+  async isUserMember(
+    workspaceId: number,
+    userId: number
+  ): Promise<boolean> {
+    const member = await this.memberRepo.findOne({
+      where: {
+        workspace: { id: workspaceId },
+        user: { id: userId },
+      },
+    });
+    return !!member;
+  }
+
   async findMember(
     workspaceId: number,
     userId: number

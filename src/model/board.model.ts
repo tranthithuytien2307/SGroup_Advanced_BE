@@ -2,9 +2,9 @@ import { AppDataSource } from "../data-source";
 import { Board } from "../entities/board.entity";
 import { BoardMember, BoardRole } from "../entities/board-member.entity";
 import { BoardInvitation } from "../entities/board_invitations.entity";
-import { WorkspaceInvitation } from "../entities/workspace-invitations.entity";
 import { User } from "../entities/user.entity";
-import { BoardTemplate } from "../entities/template.entity";
+import { EntityManager } from "typeorm";
+import { Template } from "../entities/template.entity";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
 
@@ -14,7 +14,7 @@ class BoardModel {
   private userRepository = AppDataSource.getRepository(User);
   private boardInvitationRepository =
     AppDataSource.getRepository(BoardInvitation);
-  private templateRepository = AppDataSource.getRepository(BoardTemplate);
+  private templateRepository = AppDataSource.getRepository(Template);
   private templateListRepository = AppDataSource.getRepository(TemplateList);
   private templateCardRepository = AppDataSource.getRepository(TemplateCard);
 
@@ -269,6 +269,25 @@ class BoardModel {
       console.error("Error in createMember:", error);
       throw new Error("Failed to create workspace member");
     }
+  }
+
+  async createBoardFromTemplate(
+    manager: EntityManager,
+    name: string,
+    workspaceId: number,
+    ownerId: number,
+    visibility: "private" | "workspace" | "public"
+  ): Promise<Board> {
+    const repo = manager.getRepository(Board);
+
+    const board = repo.create({
+      name: name,
+      workspace_id: workspaceId,
+      created_by_id: ownerId,
+      visibility: visibility,
+    } as Partial<Board>);
+
+    return await repo.save(board);
   }
 
   async saveBoardAsTemplate(boardId: number) {

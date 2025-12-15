@@ -12,7 +12,7 @@ import { Workspace } from "./workspace.entity";
 import { User } from "./user.entity";
 import { BoardMember } from "./board-member.entity";
 import { BoardInvitation } from "./board_invitations.entity";
-import { BoardList } from "./list-card.entity";
+import { ListCard } from "./list-card.entity";
 
 @Entity("boards")
 export class Board {
@@ -65,8 +65,8 @@ export class Board {
   @Column()
   workspace_id!: number;
 
-  @OneToMany(() => BoardList, (l) => l.board)
-  lists!: BoardList[];
+  @OneToMany(() => ListCard, (l) => l.board)
+  lists!: ListCard[];
 
   /** User create board */
   @ManyToOne(() => User, (user) => user.createdBoards, { onDelete: "SET NULL" })

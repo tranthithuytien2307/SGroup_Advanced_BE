@@ -10,11 +10,15 @@ import {
   NotFoundError,
   ForbiddenError,
 } from "../handler/error.response";
+import workspaceMemberModel from "../model/workspace-member.model";
+import boardModel from "../model/board.model";
+import listCardModel from "../model/list-card.model";
+import cardModel from "../model/card.model";
 
 class TemplateService {
   async getAll() {
     try {
-      return await templateModel.getAll();
+      return await templateModel.getActiveTemplates();
     } catch (error) {
       console.error("Template error:", error);
       throw new InternalServerError("Failed to fetch templates");
@@ -30,68 +34,47 @@ class TemplateService {
   }) {
     const { templateId, ownerId, workspaceId, boardName, visibility } = params;
 
-    const template = await templateModel.findById(templateId);
+    const template = await templateModel.findByIdWithLists(templateId);
     if (!template) throw new NotFoundError("Template not found");
 
     if (!workspaceId) throw new NotFoundError("Not found workspaceId");
 
-    const isMember = await templateModel.isUserMember(workspaceId, ownerId);
+    const isMember = await workspaceMemberModel.isUserMember(
+      workspaceId,
+      ownerId
+    );
     if (!isMember)
-      throw new ForbiddenError("User is not owner/admin of this workspace");
+      throw new ForbiddenError("User is not member of this workspace");
 
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const boardRepo = queryRunner.manager.getRepository(Board);
-      const newBoard = boardRepo.create({
-        name: boardName || template.name,
-        created_by_id: ownerId,
-        workspace_id: workspaceId,
-        visibility: visibility || "private",
-      } as Partial<Board>);
-      const savedBoard = await boardRepo.save(newBoard);
+      const manager = queryRunner.manager;
 
-      const ListCardRepo = queryRunner.manager.getRepository(ListCard);
-      const boardCardRepo = queryRunner.manager.getRepository(Card);
-
-      const listMap = new Map<number, number>();
-
-      const listsToCreate = (template.lists || []).map((tl: TemplateList) =>
-        ListCardRepo.create({
-          board_id: savedBoard.id,
-          name: tl.name,
-          position: tl.position,
-        } as Partial<ListCard>)
+      const board = await boardModel.createBoardFromTemplate(
+        manager,
+        boardName || template.name,
+        workspaceId,
+        ownerId,
+        visibility || "private"
       );
-      const createdLists = await ListCardRepo.save(listsToCreate);
 
-      createdLists.forEach((bl, idx) => {
-        const tplId = template.lists[idx].id;
-        listMap.set(tplId, bl.id);
-      });
+      const listMap = await listCardModel.createListsFromTemplate(
+        manager,
+        board.id,
+        template.lists || []
+      );
 
-      const cardsToCreate: Partial<Card>[] = [];
-      for (const tplList of template.lists) {
-        const newListId = listMap.get(tplList.id);
-        if (!newListId) continue;
-        for (const card of tplList.cards || []) {
-          cardsToCreate.push(
-            boardCardRepo.create({
-              list_id: newListId,
-              title: card.title,
-              description: card.description,
-            } as Partial<Card>)
-          );
-        }
-      }
-      if (cardsToCreate.length > 0) {
-        await boardCardRepo.save(cardsToCreate);
-      }
+      await cardModel.createCardsFromTemplate(
+        manager,
+        listMap,
+        template.lists || []
+      );
 
       await queryRunner.commitTransaction();
-      return savedBoard;
+      return board;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
