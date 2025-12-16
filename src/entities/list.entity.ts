@@ -9,7 +9,7 @@ import {
 import { Board } from "./board.entity";
 import { Card } from "./card.entity";
 @Entity("board_lists")
-export class ListCard {
+export class List {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -23,8 +23,17 @@ export class ListCard {
   @Column()
   name!: string;
 
-  @Column({ default: 0 })
+  @Column({ type: "float", default: 0 })
   position!: number;
+
+  @Column({ nullable: true })
+  cover_url!: string;
+
+  @Column({ default: false })
+  is_archived!: boolean;
+
+  @Column({ type: "timestamp", nullable: true })
+  archived_at!: Date | null;
 
   @OneToMany(() => Card, (c) => c.list)
   cards!: Card[];

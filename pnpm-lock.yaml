@@ -62,6 +62,9 @@ importers:
       typeorm:
         specifier: ^0.3.26
         version: 0.3.26(pg@8.16.3)(redis@5.9.0)(reflect-metadata@0.2.2)(ts-node@10.9.2(@types/node@24.5.2)(typescript@5.9.2))
+      vnpay:
+        specifier: ^2.4.4
+        version: 2.4.4
       winston:
         specifier: ^3.18.3
         version: 3.18.3
@@ -2182,6 +2185,9 @@ packages:
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
+
+  vnpay@2.4.4:
+    resolution: {integrity: sha512-NvftKF1K+JRAyZ7I11Nz/nxmSOaya6Txy/fcW2xFGpBzUsKjfyr2YEg210YitgVHvgtZ94j2/8DFRm8PwjUHjA==}
 
   which-typed-array@1.1.19:
     resolution: {integrity: sha512-rEvr90Bck4WZt9HHFC4DJMsjvu7x+r6bImz0/BrbWb7A2djJ8hnZMrWnHo9F8ssv0OMErasDhftrfROTyqSDrw==}
@@ -4661,6 +4667,10 @@ snapshots:
   v8-compile-cache-lib@3.0.1: {}
 
   vary@1.1.2: {}
+
+  vnpay@2.4.4:
+    dependencies:
+      dayjs: 1.11.18
 
   which-typed-array@1.1.19:
     dependencies:

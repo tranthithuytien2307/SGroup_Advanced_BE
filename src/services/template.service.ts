@@ -2,7 +2,7 @@ import { AppDataSource } from "../data-source";
 import templateModel from "../model/template.model";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
-import { ListCard } from "../entities/list-card.entity";
+import { List } from "../entities/list.entity";
 import { Card } from "../entities/card.entity";
 import { Board } from "../entities/board.entity";
 import {

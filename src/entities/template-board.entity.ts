@@ -10,7 +10,7 @@ import {
 import { User } from "./user.entity";
 import { TemplateList } from "./template-list.entity";
 @Entity("board_templates")
-export class Template {
+export class TemplateBoard {
   @PrimaryGeneratedColumn()
   id!: number;
 
