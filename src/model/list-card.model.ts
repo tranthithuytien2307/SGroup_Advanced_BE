@@ -1,5 +1,5 @@
 import { EntityManager } from "typeorm";
-import { ListCard } from "../entities/list-card.entity";
+import { List } from "../entities/list.entity";
 import { TemplateList } from "../entities/template-list.entity";
 
 class ListCardModel {
@@ -8,7 +8,7 @@ class ListCardModel {
     boardId: number,
     templateLists: TemplateList[]
   ): Promise<Map<number, number>> {
-    const listCardRepo = manager.getRepository(ListCard);
+    const listCardRepo = manager.getRepository(List);
     const listMap = new Map<number, number>();
 
     for (const tl of templateLists) {
@@ -16,7 +16,7 @@ class ListCardModel {
         board_id: boardId,
         name: tl.name,
         position: tl.position,
-      } as Partial<ListCard>);
+      } as Partial<List>);
 
       const saved = await listCardRepo.save(list);
       listMap.set(tl.id, saved.id);

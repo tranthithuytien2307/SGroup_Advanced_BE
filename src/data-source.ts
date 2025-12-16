@@ -11,9 +11,9 @@ import { Role } from "./entities/role.entity";
 import { Permission } from "./entities/permission.entity";
 import { RolePermission } from "./entities/role-permission.entity";
 import { BoardInvitation } from "./entities/board_invitations.entity";
-import { ListCard } from "./entities/list-card.entity";
+import { List } from "./entities/list.entity";
 import { Card } from "./entities/card.entity";
-import { Template } from "./entities/template.entity";
+import { TemplateBoard } from "./entities/template-board.entity";
 import { TemplateList } from "./entities/template-list.entity";
 import { TemplateCard } from "./entities/template-card.entity";
 dotenv.config();
@@ -38,9 +38,9 @@ export const AppDataSource = new DataSource({
     Permission,
     RolePermission,
     BoardInvitation,
-    ListCard,
+    List,
     Card,
-    Template,
+    TemplateBoard,
     TemplateList,
     TemplateCard,
   ],

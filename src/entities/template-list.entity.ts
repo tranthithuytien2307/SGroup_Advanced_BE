@@ -6,7 +6,7 @@ import {
   OneToMany,
   JoinColumn,
 } from "typeorm";
-import { Template } from "./template.entity";
+import { TemplateBoard } from "./template-board.entity";
 import { TemplateCard } from "./template-card.entity";
 
 @Entity("template_lists")
@@ -17,9 +17,9 @@ export class TemplateList {
   @Column()
   template_id!: number;
 
-  @ManyToOne(() => Template, (t) => t.lists, { onDelete: "CASCADE" })
+  @ManyToOne(() => TemplateBoard, (t) => t.lists, { onDelete: "CASCADE" })
   @JoinColumn({ name: "template_id" })
-  template!: Template;
+  template!: TemplateBoard;
 
   @Column()
   name!: string;
