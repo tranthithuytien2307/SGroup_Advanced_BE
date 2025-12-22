@@ -6,7 +6,7 @@ import { handleServiceResponse } from "../utils/http-handler";
 class ListController {
   async getListsByBoard(req: Request, res: Response, next: NextFunction) {
     try {
-      const boardId = parseInt(req.params.boardId);
+      const boardId = parseInt(req.params.board_id);
       const lists = await listService.getListsByBoard(boardId);
       return handleServiceResponse(
         new ServiceResponse(
@@ -24,8 +24,8 @@ class ListController {
 
   async createList(req: Request, res: Response, next: NextFunction) {
     try {
-      const { boardId, name, coverUrl } = req.body;
-      const list = await listService.createList(boardId, name, coverUrl);
+      const { board_id, name, coverUrl } = req.body;
+      const list = await listService.createList(board_id, name, coverUrl);
       return handleServiceResponse(
         new ServiceResponse(
           ResponseStatus.Sucess,
@@ -78,11 +78,14 @@ class ListController {
     }
   }
 
+
   async copyList(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseInt(req.params.id);
-      const { targetBoardId, newName } = req.body;
-      const list = await listService.copyList(id, targetBoardId, newName);
+      const { newName } = req.body;
+
+      const list = await listService.copyList(id, newName);
+
       return handleServiceResponse(
         new ServiceResponse(
           ResponseStatus.Sucess,

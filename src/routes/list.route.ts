@@ -3,20 +3,48 @@ import listController from "../controllers/list.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { authorizeBoard } from "../middleware/rbac-board.middleware";
-
+import { authorizeListById } from "../middleware/rbac.list.middleware";
+import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
+import z from "zod";
+import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
+import { ListSchema } from "../schemas/list.schema";
 const router = Router();
+export const listRegistery = new OpenAPIRegistry();
 
 router.use(authMiddleware);
 
-// Get lists by board
+listRegistery.registerPath({
+  method: "get",
+  path: "api/lists/board/:board_id",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.null(), "Get all lists by board id"),
+});
+
 router.get(
-  "/board/:boardId", 
+  "/board/:board_id",
   authMiddleware,
   authorizeBoard(["admin", "member", "viewer"]),
   asyncHandler(listController.getListsByBoard)
 );
 
-// Create list
+listRegistery.registerPath({
+  method: "post",
+  path: "/api/lists",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: ListSchema.Create,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Create list"),
+});
+
 router.post(
   "/",
   authMiddleware,
@@ -24,27 +52,60 @@ router.post(
   asyncHandler(listController.createList)
 );
 
-// Update list
+listRegistery.registerPath({
+  method: "patch",
+  path: "/api/lists/:id",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: { content: { "application/json": { schema: ListSchema.Update } } },
+    params: ListSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Update List"),
+});
+
 router.patch(
-  "/:id", 
+  "/:id",
   authMiddleware,
-  authorizeBoard(["admin", "member"]),
+  authorizeListById(["admin", "member"]),
   asyncHandler(listController.updateList)
 );
 
-// Move list
+listRegistery.registerPath({
+  method: "put",
+  path: "/api/lists/:id/move",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: { content: { "application/json": { schema: ListSchema.Move } } },
+    params: ListSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Move List"),
+});
+
 router.post(
   "/:id/move",
   authMiddleware,
-  authorizeBoard(["admin", "member"]),
+  authorizeListById(["admin", "member"]),
   asyncHandler(listController.moveList)
 );
 
-// Copy list
+listRegistery.registerPath({
+  method: "put",
+  path: "/api/lists/:id/copy",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: { content: { "application/json": { schema: ListSchema.Copy } } },
+    params: ListSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Copy List"),
+});
+
 router.post(
   "/:id/copy",
   authMiddleware,
-  authorizeBoard(["admin", "member"]),
+  authorizeListById(["admin", "member"]),
   asyncHandler(listController.copyList)
 );
 

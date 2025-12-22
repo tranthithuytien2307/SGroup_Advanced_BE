@@ -40,6 +40,22 @@ class CardModel {
       }
     }
   }
+
+  async copyCardToList(
+    listId: number,
+    title: string,
+    description: string | null,
+    position: number
+  ): Promise<Card> {
+    const card = this.cardRepository.create({
+      list_id: listId,
+      title,
+      description,
+      position,
+    });
+
+    return await this.cardRepository.save(card);
+  }
 }
 
 export default new CardModel();

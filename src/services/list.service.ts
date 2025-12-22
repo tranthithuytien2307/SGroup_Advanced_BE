@@ -3,6 +3,7 @@ import boardModel from "../model/board.model";
 import cardModel from "../model/card.model";
 import {
   BadRequestError,
+  ErrorResponse,
   InternalServerError,
   NotFoundError,
 } from "../handler/error.response";
@@ -26,13 +27,13 @@ class ListService {
       if (!board) throw new NotFoundError("Board not found");
 
       const count = await listModel.countListsByBoardId(boardId);
-      
-      return await listModel.createList({
-        board_id: boardId,
+
+      return await listModel.createList(
+        boardId,
         name,
-        cover_url: coverUrl,
-        position: count + 1, // Add to end
-      });
+        coverUrl ?? null,
+        count + 1
+      );
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to create list");
@@ -73,22 +74,19 @@ class ListService {
       let newPosition: number;
 
       if (newIndex <= 0) {
-        // Case 1: To the top
         const first = lists[0];
         newPosition = first ? first.position / 2 : 100;
       } else if (newIndex >= lists.length) {
-        // Case 3: To the end
         const last = lists[lists.length - 1];
         newPosition = last ? last.position + 100 : 100;
       } else {
-        // Case 2: In the middle
         const prev = lists[newIndex - 1];
         const next = lists[newIndex];
 
         newPosition = (prev.position + next.position) / 2;
       }
 
-      // Update list
+      list.board = targetBoard;
       list.board_id = newBoardId;
       list.position = newPosition;
 
@@ -99,38 +97,42 @@ class ListService {
     }
   }
 
-  async copyList(id: number, targetBoardId: number, newName?: string) {
+  async copyList(id: number, newName?: string): Promise<List> {
     try {
       const sourceList = await listModel.getListById(id);
-      if (!sourceList) throw new NotFoundError("Source list not found");
+      if (!sourceList) {
+        throw new NotFoundError("Source list not found", 404);
+      }
 
-      const targetBoard = await boardModel.getById(targetBoardId);
-      if (!targetBoard) throw new NotFoundError("Target board not found");
+      const boardId = sourceList.board_id;
+      const count = await listModel.countListsByBoardId(boardId);
 
-      // Create new list
-      const count = await listModel.countListsByBoardId(targetBoardId);
-      const newList = await listModel.createList({
-        board_id: targetBoardId,
-        name: newName || sourceList.name,
-        cover_url: sourceList.cover_url,
-        position: count + 1,
-      });
+      const newList = await listModel.createList(
+        boardId,
+        newName || `${sourceList.name} (copy)`,
+        sourceList.cover_url,
+        count + 1
+      );
 
-      // Copy cards
-      if (sourceList.cards && sourceList.cards.length > 0) {
+      if (sourceList.cards?.length) {
         for (const card of sourceList.cards) {
-          await cardModel.createCard({
-            list_id: newList.id,
-            title: card.title,
-            description: card.description,
-            position: card.position,
-          });
+          await cardModel.copyCardToList(
+            newList.id,
+            card.title,
+            card.description,
+            card.position
+          );
         }
       }
 
-      return await listModel.getListById(newList.id);
+      const result = await listModel.getListById(newList.id);
+      if (!result) {
+        throw new InternalServerError("Failed to load copied list");
+      }
+
+      return result;
     } catch (error) {
-      if (error instanceof NotFoundError) throw error;
+      if (error instanceof ErrorResponse) throw error;
       throw new InternalServerError("Failed to copy list");
     }
   }

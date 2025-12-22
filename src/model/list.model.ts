@@ -4,8 +4,19 @@ import { List } from "../entities/list.entity";
 class ListModel {
   private listRepository = AppDataSource.getRepository(List);
 
-  async createList(data: Partial<List>): Promise<List> {
-    const newList = this.listRepository.create(data);
+  async createList(
+    boardId: number,
+    name: string,
+    coverUrl: string | null,
+    position: number
+  ): Promise<List> {
+    const newList = this.listRepository.create({
+      name,
+      cover_url: coverUrl ?? undefined,
+      position,
+      board: { id: boardId },
+    });
+
     return await this.listRepository.save(newList);
   }
 
@@ -41,7 +52,9 @@ class ListModel {
   }
 
   async countListsByBoardId(boardId: number): Promise<number> {
-    return await this.listRepository.count({ where: { board_id: boardId } });
+    return await this.listRepository.count({
+      where: { board_id: boardId },
+    });
   }
 }
 

@@ -28,7 +28,7 @@ class BoardModel {
   async getById(id: number): Promise<Board | null> {
     return await this.boardRepository.findOne({
       where: { id },
-      relations: ["workspace", "members", "members.user"],
+      relations: ["workspace", "members", "members.user","lists", "lists.cards"],
     });
   }
 

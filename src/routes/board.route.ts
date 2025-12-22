@@ -364,4 +364,13 @@ router.post(
   asyncHandler(boardController.unarchive)
 );
 
+router.put(
+  "/visibility/:board_id",
+  authMiddleware,
+  authorizeBoard(["admin"]),
+  validateRequest(BoardSchema.UpdateVisibilityParams, "params"),
+  validateRequest(BoardSchema.UpdateVisibilityBody, "body"),
+  asyncHandler(boardController.updateVisibility)
+);
+
 export default router;

@@ -118,6 +118,22 @@ export const BoardSchema = {
       board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
     })
     .openapi("UnarchiveBoardParams"),
+
+  UpdateVisibilityParams: z
+    .object({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number").openapi({
+        description: "Board ID",
+      }),
+    })
+    .openapi("UpdateBoardVisibilityParams"),
+
+  UpdateVisibilityBody: z
+    .object({
+      visibility: z.enum(["private", "workspace", "public"]).openapi({
+        description: "Board visibility",
+      }),
+    })
+    .openapi("UpdateBoardVisibilityRequest"),
 };
 
 export type CreateBoardInput = z.infer<typeof BoardSchema.Create>;
@@ -127,4 +143,11 @@ export type WorkspaceBoardParams = z.infer<typeof BoardSchema.GetByWorkspace>;
 export type ChangeBoardOwnerInput = z.infer<typeof BoardSchema.ChangeOwner>;
 export type JoinBoardByInviteTokenParams = z.infer<
   typeof BoardSchema.JoinInvite
+>;
+export type UpdateBoardVisibilityParams = z.infer<
+  typeof BoardSchema.UpdateVisibilityParams
+>;
+
+export type UpdateBoardVisibilityInput = z.infer<
+  typeof BoardSchema.UpdateVisibilityBody
 >;
