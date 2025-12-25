@@ -47,15 +47,24 @@ class ListService {
 
       if (data.name !== undefined) list.name = data.name;
       if (data.cover_url !== undefined) list.cover_url = data.cover_url;
-      if (data.is_archived !== undefined) {
-        list.is_archived = data.is_archived;
-        list.archived_at = data.is_archived ? new Date() : null;
-      }
 
       return await listModel.updateList(list);
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to update list");
+    }
+  }
+
+  async archiveList(id: number) {
+    try {
+      const list = await listModel.getListById(id);
+      if (!list) throw new NotFoundError("List not found");
+      list.is_archived = true;
+      list.archived_at = new Date();
+      return await listModel.updateList(list);
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to archive list");
     }
   }
 
@@ -134,6 +143,68 @@ class ListService {
     } catch (error) {
       if (error instanceof ErrorResponse) throw error;
       throw new InternalServerError("Failed to copy list");
+    }
+  }
+
+  private shouldReindex(lists: List[]): boolean {
+    for (let i = 1; i < lists.length; i++) {
+      if (Math.abs(lists[i].position - lists[i - 1].position) < 0.0001) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private async reindexBoard(boardId: number) {
+    const lists = await listModel.getListsByBoardId(boardId);
+
+    for (let i = 0; i < lists.length; i++) {
+      lists[i].position = (i + 1) * 100;
+    }
+
+    await listModel.bulkUpdate(lists);
+  }
+
+  async reorderList(id: number, newIndex: number) {
+    try {
+      const list = await listModel.getListById(id);
+      if (!list) throw new NotFoundError("List not found");
+
+      const lists = await this.getListsByBoard(list.board_id)
+
+      const filteredLists = lists.filter((l) => l.id !== id )
+
+      if (newIndex < 0 || newIndex > filteredLists.length) {
+        throw new BadRequestError("Invalid new index");
+      }
+
+      let newPosition: number;
+      if (filteredLists.length === 0) newPosition = 100;
+      else if (newIndex === filteredLists.length) {
+        newPosition = filteredLists[filteredLists.length - 1].position + 100;
+      }
+      else if (newIndex === 0) {
+        newPosition = filteredLists[0].position / 2;
+      }
+      else {
+        const prev = filteredLists[newIndex - 1];
+        const next = filteredLists[newIndex];
+        newPosition = (prev.position + next.position) / 2;
+      }
+
+      list.position = newPosition;
+
+      await listModel.updateList(list)
+
+      const needReindex = this.shouldReindex(filteredLists);
+      if (needReindex) {
+        await this.reindexBoard(list.board_id);
+      }
+
+      return await this.getListsByBoard(list.board_id);
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof BadRequestError) throw error;
+      throw new InternalServerError("Failed to reorder list");
     }
   }
 }

@@ -56,6 +56,10 @@ class ListModel {
       where: { board_id: boardId },
     });
   }
+
+  async bulkUpdate(lists: List[]): Promise<void> {
+    await this.listRepository.save(lists);
+  }
 }
 
 export default new ListModel();

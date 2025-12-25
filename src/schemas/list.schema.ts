@@ -72,6 +72,15 @@ export const ListSchema = {
         }),
     })
     .openapi("CopyListRequest"),
+
+  Reorder: z
+    .object({
+      newIndex: z
+        .number()
+        .min(0)
+        .openapi({ description: "New index of the list" }),
+    })
+    .openapi("ReorderListRequest"),
 };
 
 export type CreateListInput = z.infer<typeof ListSchema.Create>;
@@ -79,3 +88,4 @@ export type UpdateListInput = z.infer<typeof ListSchema.Update>;
 export type MoveListInput = z.infer<typeof ListSchema.Move>;
 export type CopyListInput = z.infer<typeof ListSchema.Copy>;
 export type GetListByIdInput = z.infer<typeof ListSchema.GetById>;
+export type ReorderListInput = z.infer<typeof ListSchema.Reorder>;

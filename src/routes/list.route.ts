@@ -15,7 +15,7 @@ router.use(authMiddleware);
 
 listRegistery.registerPath({
   method: "get",
-  path: "api/lists/board/:board_id",
+  path: "/api/list/board/:board_id",
   tags: ["List"],
   security: [{ BearerAuth: [] }],
   responses: createApiResponse(z.null(), "Get all lists by board id"),
@@ -30,7 +30,7 @@ router.get(
 
 listRegistery.registerPath({
   method: "post",
-  path: "/api/lists",
+  path: "/api/list",
   tags: ["List"],
   security: [{ BearerAuth: [] }],
   request: {
@@ -54,7 +54,7 @@ router.post(
 
 listRegistery.registerPath({
   method: "patch",
-  path: "/api/lists/:id",
+  path: "/api/list/:id",
   tags: ["List"],
   security: [{ BearerAuth: [] }],
   request: {
@@ -73,7 +73,7 @@ router.patch(
 
 listRegistery.registerPath({
   method: "put",
-  path: "/api/lists/:id/move",
+  path: "/api/list/:id/move",
   tags: ["List"],
   security: [{ BearerAuth: [] }],
   request: {
@@ -92,7 +92,7 @@ router.post(
 
 listRegistery.registerPath({
   method: "put",
-  path: "/api/lists/:id/copy",
+  path: "/api/list/:id/copy",
   tags: ["List"],
   security: [{ BearerAuth: [] }],
   request: {
@@ -107,6 +107,25 @@ router.post(
   authMiddleware,
   authorizeListById(["admin", "member"]),
   asyncHandler(listController.copyList)
+);
+
+listRegistery.registerPath({
+  method: "put",
+  path: "/api/list/:id/reorder",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: { content: { "application/json": { schema: ListSchema.Reorder } } },
+    params: ListSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Reorder List"),
+});
+
+router.put(
+  "/:id/reorder",
+  authMiddleware,
+  authorizeListById(["admin", "member"]),
+  asyncHandler(listController.reorderList)
 );
 
 export default router;
