@@ -6,6 +6,7 @@ import board from "./board.route";
 import workspaceMember from "./workspace-member.route";
 import templateBoard from "./template.route";
 import listRouter from "./list.route";
+import cardRouter from "./card.route";
 
 const router = Router();
 router.use("/", userRouter);
@@ -15,5 +16,6 @@ router.use("/board", board);
 router.use("/workspace-member", workspaceMember);
 router.use("/templateBoard", templateBoard);
 router.use("/list", listRouter);
+router.use("/card", cardRouter);
 
 export default router;

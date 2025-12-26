@@ -24,6 +24,12 @@ export class Card {
 
   @Column({ type: "float", default: 0 })
   position!: number;
+  
+  @Column({ default: false })
+  is_archived!: boolean;
+
+  @Column({ type: "timestamp", nullable: true })
+  archived_at!: Date | null;
 
   @Column({ type: "text", nullable: true })
   description!: string | null;

@@ -200,7 +200,7 @@ class ListService {
       if (needReindex) {
         await this.reindexBoard(list.board_id);
       }
-
+      
       return await this.getListsByBoard(list.board_id);
     } catch (error) {
       if (error instanceof NotFoundError || error instanceof BadRequestError) throw error;
