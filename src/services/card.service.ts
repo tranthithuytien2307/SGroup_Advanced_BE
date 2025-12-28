@@ -10,7 +10,7 @@ import { Card } from "../entities/card.entity";
 import { List } from "../entities/list.entity";
 
 class CardService {
-async createCard(listId: number, title: string) {
+  async createCard(listId: number, title: string) {
     try {
       const list = await listModel.getListById(listId);
       if (!list) throw new NotFoundError("List not found");
@@ -40,18 +40,32 @@ async createCard(listId: number, title: string) {
     }
   }
 
-  async setArchive(id: number, isArchived: boolean) {
+  async archiveCard(id: number) {
     try {
       const card = await cardModel.getById(id);
       if (!card) throw new NotFoundError("Card not found");
 
-      card.is_archived = isArchived;
-      card.archived_at = isArchived ? new Date() : null;
+      card.is_archived = true;
+      card.archived_at = new Date();
 
       return await cardModel.updateCard(card);
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to archive card");
+    }
+  }
+
+  async unarchiveCard(id: number) {
+    try {
+      const card = await cardModel.getById(id);
+      if (!card) throw new NotFoundError("Card not found");
+
+      card.is_archived = false;
+      card.archived_at = null;
+      return await cardModel.updateCard(card);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to unarchive card");
     }
   }
 
@@ -62,17 +76,31 @@ async createCard(listId: number, title: string) {
 
       const listId = card.list_id;
       const cards = await cardModel.getCardsByListId(listId);
-      const filtered = cards.filter((c) => c.id !== id);
 
-      if (newIndex < 0 || newIndex > filtered.length) {
+      const filteredCards = cards.filter((c) => c.id !== id);
+
+      if (newIndex < 0 || newIndex > filteredCards.length) {
         throw new BadRequestError("Invalid new index");
       }
 
-      const newPos = this.computeNewPosition(filtered, newIndex);
-      card.position = newPos;
+      let newPosition: number;
+      if (filteredCards.length === 0) {
+        newPosition = 100;
+      } else if (newIndex === filteredCards.length) {
+        newPosition = filteredCards[filteredCards.length - 1].position + 100;
+      } else if (newIndex === 0) {
+        newPosition = filteredCards[0].position / 2;
+      } else {
+        const prev = filteredCards[newIndex - 1];
+        const next = filteredCards[newIndex];
+        newPosition = (prev.position + next.position) / 2;
+      }
+
+      card.position = newPosition;
       await cardModel.updateCard(card);
 
-      if (this.shouldReindex(filtered)) {
+      const needReindex = this.shouldReindex(filteredCards);
+      if (needReindex) {
         await this.reindexList(listId);
       }
 

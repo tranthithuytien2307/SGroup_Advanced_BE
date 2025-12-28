@@ -36,11 +36,25 @@ class CardController {
   async archiveCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     const { is_archived } = req.body;
-    const card = await cardService.setArchive(id, is_archived);
+    const card = await cardService.archiveCard(id);
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Archive card successfully",
+        card,
+        200
+      ),
+      res
+    );
+  }
+
+  async unarchiveCard(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+    const card = await cardService.unarchiveCard(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Unarchive card successfully",
         card,
         200
       ),

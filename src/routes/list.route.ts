@@ -110,7 +110,7 @@ router.post(
 );
 
 listRegistery.registerPath({
-  method: "put",
+  method: "patch",
   path: "/api/list/:id/reorder",
   tags: ["List"],
   security: [{ BearerAuth: [] }],
@@ -121,7 +121,7 @@ listRegistery.registerPath({
   responses: createApiResponse(z.null(), "Reorder List"),
 });
 
-router.put(
+router.patch(
   "/:id/reorder",
   authMiddleware,
   authorizeListById(["admin", "member"]),

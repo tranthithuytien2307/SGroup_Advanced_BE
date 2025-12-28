@@ -126,9 +126,8 @@ class ListService {
       if (sourceList.cards?.length) {
         for (const card of sourceList.cards) {
           await cardModel.copyCardToList(
+            card,
             newList.id,
-            card.title,
-            card.description,
             card.position
           );
         }
