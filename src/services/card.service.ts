@@ -8,6 +8,7 @@ import {
 } from "../handler/error.response";
 import { Card } from "../entities/card.entity";
 import { List } from "../entities/list.entity";
+import boardModel from "../model/board.model";
 
 class CardService {
   async createCard(listId: number, title: string) {
@@ -111,7 +112,12 @@ class CardService {
     }
   }
 
-  async moveCard(id: number, toListId: number, newIndex: number) {
+    async moveCard(
+    id: number,
+    toBoardId: number,
+    toListId: number,
+    newIndex: number
+  ) {
     try {
       const card = await cardModel.getById(id);
       if (!card) throw new NotFoundError("Card not found");
@@ -119,23 +125,25 @@ class CardService {
       const fromList = await listModel.getListById(card.list_id);
       if (!fromList) throw new NotFoundError("Source list not found");
 
+      const toBoard = await boardModel.getById(toBoardId);
+      if (!toBoard) throw new NotFoundError("Target board not found");
+
       const toList = await listModel.getListById(toListId);
       if (!toList) throw new NotFoundError("Target list not found");
 
-      if (fromList.board_id !== toList.board_id) {
-        throw new BadRequestError("Cannot move card across different boards");
+      if (toList.board_id !== toBoardId) {
+        throw new BadRequestError("Target list does not belong to target board");
       }
 
       const targetCards = await cardModel.getCardsByListId(toListId);
+
       if (newIndex < 0 || newIndex > targetCards.length) {
         throw new BadRequestError("Invalid new index");
       }
 
-      const newPos = this.computeNewPosition(targetCards, newIndex);
-
       card.list_id = toListId;
       card.list = { id: toListId } as List;
-      card.position = newPos;
+      card.position = this.computeNewPosition(targetCards, newIndex);
 
       await cardModel.updateCard(card);
 
@@ -150,32 +158,51 @@ class CardService {
     }
   }
 
-  async copyCard(id: number, toListId: number, newTitle?: string) {
+
+  async copyCard(
+    id: number,
+    toBoardId: number,
+    toListId: number,
+    newIndex: number,
+    newTitle?: string
+  ) {
     try {
-      const source = await cardModel.getById(id);
-      if (!source) throw new NotFoundError("Source card not found");
+      const sourceCard = await cardModel.getById(id);
+      if (!sourceCard) throw new NotFoundError("Source card not found");
+
+      const fromList = await listModel.getListById(sourceCard.list_id);
+      if (!fromList) throw new NotFoundError("Source list not found");
+
+      const toBoard = await boardModel.getById(toBoardId);
+      if (!toBoard) throw new NotFoundError("Target board not found");
 
       const toList = await listModel.getListById(toListId);
       if (!toList) throw new NotFoundError("Target list not found");
 
-      const fromList = await listModel.getListById(source.list_id);
-      if (!fromList) throw new NotFoundError("Source list not found");
-
-      if (fromList.board_id !== toList.board_id) {
-        throw new BadRequestError("Cannot copy card across different boards (current rule)");
+      if (toList.board_id !== toBoardId) {
+        throw new BadRequestError("Target list does not belong to target board");
       }
 
-      const count = await cardModel.countCardsByListId(toListId);
-      const position = (count + 1) * 100;
+      const targetCards = await cardModel.getCardsByListId(toListId);
+
+      if (newIndex < 0 || newIndex > targetCards.length) {
+        throw new BadRequestError("Invalid new index");
+      }
+
+      const newPosition = this.computeNewPosition(targetCards, newIndex);
 
       const created = await cardModel.createCard(
         toListId,
-        newTitle ?? `${source.title} (copy)`,
-        position
+        newTitle ?? `${sourceCard.title} (copy)`,
+        newPosition
       );
 
-      created.description = source.description;
+      created.description = sourceCard.description;
       await cardModel.updateCard(created);
+
+      if (this.shouldReindex(targetCards)) {
+        await this.reindexList(toListId);
+      }
 
       return created;
     } catch (e) {
@@ -183,6 +210,7 @@ class CardService {
       throw new InternalServerError("Failed to copy card");
     }
   }
+
 
   private computeNewPosition(sortedCards: Card[], newIndex: number): number {
     if (sortedCards.length === 0) return 100;

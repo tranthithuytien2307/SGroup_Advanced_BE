@@ -6,7 +6,9 @@ import { handleServiceResponse } from "../utils/http-handler";
 class CardController {
   async createCard(req: Request, res: Response) {
     const { list_id, title } = req.body;
+
     const card = await cardService.createCard(list_id, title);
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
@@ -21,7 +23,9 @@ class CardController {
   async updateCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     const data = req.body;
+
     const card = await cardService.updateCard(id, data);
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
@@ -35,8 +39,9 @@ class CardController {
 
   async archiveCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
-    const { is_archived } = req.body;
+
     const card = await cardService.archiveCard(id);
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
@@ -50,7 +55,9 @@ class CardController {
 
   async unarchiveCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
+
     const card = await cardService.unarchiveCard(id);
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
@@ -65,12 +72,14 @@ class CardController {
   async reorderCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     const { newIndex } = req.body;
-    const card = await cardService.reorderCard(id, newIndex);
+
+    const cards = await cardService.reorderCard(id, newIndex);
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Reorder card successfully",
-        card,
+        cards,
         200
       ),
       res
@@ -79,13 +88,20 @@ class CardController {
 
   async moveCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
-    const { toListId, newIndex } = req.body;
-    const card = await cardService.moveCard(id, toListId, newIndex);
+    const { toBoardId, toListId, newIndex } = req.body;
+
+    const cards = await cardService.moveCard(
+      id,
+      toBoardId,
+      toListId,
+      newIndex
+    );
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Move card successfully",
-        card,
+        cards,
         200
       ),
       res
@@ -94,8 +110,16 @@ class CardController {
 
   async copyCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
-    const { toListId, newTitle } = req.body;
-    const card = await cardService.copyCard(id, toListId, newTitle);
+    const { toBoardId, toListId, newIndex, newTitle } = req.body;
+
+    const card = await cardService.copyCard(
+      id,
+      toBoardId,
+      toListId,
+      newIndex,
+      newTitle
+    );
+
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
