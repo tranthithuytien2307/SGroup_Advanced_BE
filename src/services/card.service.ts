@@ -79,7 +79,10 @@ class CardService {
       });
       await cardMemberRepo.save(newMember);
 
-      return await cardModel.getCardDetails(cardId);
+      return {
+        cardId: cardId,
+        userId: userId,
+      }
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to add member to card");
