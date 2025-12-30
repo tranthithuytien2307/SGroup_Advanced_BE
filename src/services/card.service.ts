@@ -162,7 +162,9 @@ class CardService {
       if (!fromList) throw new NotFoundError("Source list not found");
 
       if (fromList.board_id !== toList.board_id) {
-        throw new BadRequestError("Cannot copy card across different boards (current rule)");
+        throw new BadRequestError(
+          "Cannot copy card across different boards (current rule)"
+        );
       }
 
       const count = await cardModel.countCardsByListId(toListId);
@@ -215,6 +217,53 @@ class CardService {
     await cardModel.bulkUpdate(cards);
   }
 
+  async setDates(
+    card_id: number,
+    start_date: Date | null,
+    deadline_date: Date | null
+  ) {
+    try {
+      const card = await cardModel.getById(card_id);
+      if (!card) throw new NotFoundError("Card not found");
+
+      return await cardModel.updateDates(card_id, start_date, deadline_date);
+    } catch (error) {
+      if (error instanceof Error) throw error;
+      throw new InternalServerError("Failed to set card dates");
+    }
+  }
+
+  async markCompleted(card_id: number) {
+    try {
+      const card = await cardModel.getById(card_id);
+      if (!card) throw new NotFoundError("Card not found");
+
+      return await cardModel.markCompleted(card_id);
+    } catch (error) {
+      if (error instanceof Error) throw error;
+      throw new InternalServerError("Failed to complete card");
+    }
+  }
+
+  async getDateStatus(card_id: number) {
+    const card = await cardModel.getById(card_id);
+    if (!card) throw new NotFoundError("Card not found");
+
+    const now = new Date();
+
+    return {
+      is_completed: card.is_completed,
+      is_overdue:
+        !card.is_completed &&
+        card.deadline_date !== null &&
+        now > card.deadline_date,
+
+      completed_early:
+        card.is_completed &&
+        card.deadline_date !== null &&
+        now < card.deadline_date,
+    };
+  }
 }
 
 export default new CardService();

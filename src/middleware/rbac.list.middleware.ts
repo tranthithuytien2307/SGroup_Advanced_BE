@@ -113,7 +113,10 @@ export const authorizeListByBody = (requiredRoles: BoardRole[]) => {
 
       next();
     } catch (error) {
-      if (error instanceof AuthFailureError || error instanceof ForbiddenError) {
+      if (
+        error instanceof AuthFailureError ||
+        error instanceof ForbiddenError
+      ) {
         throw error;
       }
       throw new InternalServerError(

@@ -106,6 +106,58 @@ class CardController {
       res
     );
   }
+
+  setDates = async (req: Request, res: Response) => {
+    const { card_id, start_date, deadline_date } = req.body;
+
+    const data = await cardService.setDates(
+      card_id,
+      start_date ? new Date(start_date) : null,
+      deadline_date ? new Date(deadline_date) : null
+    );
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Card dates updated successfully",
+        data,
+        200
+      ),
+      res
+    );
+  };
+
+  markCompleted = async (req: Request, res: Response) => {
+    const { card_id } = req.body;
+
+    const data = await cardService.markCompleted(card_id);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Card marked as completed",
+        data,
+        200
+      ),
+      res
+    );
+  };
+
+  getStatus = async (req: Request, res: Response) => {
+    const card_id = Number(req.params.card_id);
+
+    const data = await cardService.getDateStatus(card_id);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Card date status retrieved",
+        data,
+        200
+      ),
+      res
+    );
+  };
 }
 
 export default new CardController();
