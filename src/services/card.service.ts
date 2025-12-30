@@ -9,6 +9,10 @@ import {
 import { Card } from "../entities/card.entity";
 import { List } from "../entities/list.entity";
 import boardModel from "../model/board.model";
+import { AppDataSource } from "../data-source";
+import { BoardMember } from "../entities/board-member.entity";
+import { User } from "../entities/user.entity";
+import { CardMember } from "../entities/card-member.entity";
 
 class CardService {
   async createCard(listId: number, title: string) {
@@ -33,6 +37,8 @@ class CardService {
 
       if (data.title !== undefined) card.title = data.title;
       if (data.description !== undefined) card.description = data.description;
+      if (data.cover_color !== undefined) card.cover_color = data.cover_color;
+      if (data.cover_image_url !== undefined) card.cover_image_url = data.cover_image_url;
 
       return await cardModel.updateCard(card);
     } catch (e) {
@@ -40,6 +46,65 @@ class CardService {
       throw new InternalServerError("Failed to update card");
     }
   }
+
+  async addMember(cardId: number, userId: number) {
+    try {
+      const card = await cardModel.getById(cardId);
+      if (!card) throw new NotFoundError("Card not found");
+
+      const list = await listModel.getListById(card.list_id);
+      if (!list) throw new NotFoundError("List not found");
+
+      const boardMemberRepo = AppDataSource.getRepository(BoardMember);
+      const isMember = await boardMemberRepo.findOne({
+        where: { board: { id: list.board_id }, user: { id: userId } },
+      });
+
+      if (!isMember) {
+        throw new BadRequestError("User is not a member of the board");
+      }
+
+      const cardMemberRepo = AppDataSource.getRepository(CardMember);
+      const existingMember = await cardMemberRepo.findOne({
+        where: { card_id: cardId, user_id: userId },
+      });
+
+      if (existingMember) {
+        throw new BadRequestError("User is already a member of this card");
+      }
+
+      const newMember = cardMemberRepo.create({
+        card_id: cardId,
+        user_id: userId,
+      });
+      await cardMemberRepo.save(newMember);
+
+      return await cardModel.getCardDetails(cardId);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to add member to card");
+    }
+  }
+
+  async removeMember(cardId: number, userId: number) {
+    try {
+      const cardMemberRepo = AppDataSource.getRepository(CardMember);
+      const member = await cardMemberRepo.findOne({
+        where: { card_id: cardId, user_id: userId },
+      });
+
+      if (!member) {
+        throw new BadRequestError("User is not a member of this card");
+      }
+
+      await cardMemberRepo.remove(member);
+      return await cardModel.getCardDetails(cardId);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to remove member from card");
+    }
+  }
+
 
   async archiveCard(id: number) {
     try {

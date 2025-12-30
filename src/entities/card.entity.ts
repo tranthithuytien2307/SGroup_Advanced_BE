@@ -4,8 +4,11 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from "typeorm";
 import { List } from "./list.entity";
+import { Comment } from "./comment.entity";
+import { CardMember } from "./card-member.entity";
 
 @Entity("cards")
 export class Card {
@@ -33,4 +36,16 @@ export class Card {
 
   @Column({ type: "text", nullable: true })
   description!: string | null;
+
+  @Column({ nullable: true })
+  cover_color!: string;
+
+  @Column({ nullable: true })
+  cover_image_url!: string;
+
+  @OneToMany(() => CardMember, (member) => member.card)
+  members!: CardMember[];
+
+  @OneToMany(() => Comment, (comment) => comment.card)
+  comments!: Comment[];
 }

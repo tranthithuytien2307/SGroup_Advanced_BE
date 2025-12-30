@@ -29,8 +29,16 @@ export const CardSchema = {
         .string()
         .optional()
         .openapi({ description: "Card description" }),
+      cover_color: z.string().optional().nullable().openapi({ description: "Cover color (hex)" }),
+      cover_image_url: z.string().optional().nullable().openapi({ description: "Cover image URL" }),
     })
     .openapi("UpdateCardRequest"),
+
+  AddMember: z
+    .object({
+      userId: z.number().openapi({ description: "User ID to add" }),
+    })
+    .openapi("AddMemberRequest"),
 
   Reorder: z
     .object({

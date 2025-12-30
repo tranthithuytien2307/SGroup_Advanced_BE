@@ -3,7 +3,7 @@ import listController from "../controllers/list.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { authorizeBoard } from "../middleware/rbac-board.middleware";
-import { authorizeListById } from "../middleware/rbac.list.middleware";
+import { authorizeListById } from "../middleware/rbac-list.middleware";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";

@@ -130,6 +130,40 @@ class CardController {
       res
     );
   }
+
+  async addMember(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+    const { userId } = req.body;
+
+    const card = await cardService.addMember(id, userId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Add member successfully",
+        card,
+        200
+      ),
+      res
+    );
+  }
+
+  async removeMember(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+    const userId = parseInt(req.params.userId);
+
+    const card = await cardService.removeMember(id, userId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Remove member successfully",
+        card,
+        200
+      ),
+      res
+    );
+  }
 }
 
 export default new CardController();
