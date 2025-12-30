@@ -76,4 +76,60 @@ export const CardSchema = {
       }),
     })
     .openapi("CardDateStatusResponse"),
+  Update: z
+    .object({
+      title: z.string().optional().openapi({ description: "Card title" }),
+      description: z
+        .string()
+        .optional()
+        .openapi({ description: "Card description" }),
+      cover_color: z.string().optional().nullable().openapi({ description: "Cover color (hex)" }),
+      cover_image_url: z.string().optional().nullable().openapi({ description: "Cover image URL" }),
+    })
+    .openapi("UpdateCardRequest"),
+
+  AddMember: z
+    .object({
+      userId: z.number().openapi({ description: "User ID to add" }),
+    })
+    .openapi("AddMemberRequest"),
+
+  Reorder: z
+    .object({
+      newIndex: z
+        .number()
+        .min(0, "Index must be non-negative")
+        .openapi({ description: "New position index" }),
+    })
+    .openapi("ReorderCardRequest"),
+
+  Move: z
+    .object({
+      toBoardId: z.number().openapi({ description: "Target Board ID" }),
+      toListId: z.number().openapi({ description: "Target List ID" }),
+      newIndex: z
+        .number()
+        .min(0)
+        .openapi({ description: "New position index in target list" }),
+      newTitle: z
+        .string()
+        .optional()
+        .openapi({ description: "New title for the card (optional)" }),
+    })
+    .openapi("MoveCardRequest"),
+
+  Copy: z
+    .object({
+      toBoardId: z.number().openapi({ description: "Target Board ID" }),
+      toListId: z.number().openapi({ description: "Target List ID" }),
+      newIndex: z
+        .number()
+        .min(0)
+        .openapi({ description: "New position index in target list" }),
+      newTitle: z
+        .string()
+        .optional()
+        .openapi({ description: "New title for the copied card (optional)" }),
+    })
+    .openapi("CopyCardRequest"),
 };

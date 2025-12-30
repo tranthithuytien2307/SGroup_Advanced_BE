@@ -11,6 +11,8 @@ import {
 import { List } from "./list.entity";
 import { Label } from "./label.entity";
 import { Checklist } from "./checklist.entity";
+import { Comment } from "./comment.entity";
+import { CardMember } from "./card-member.entity";
 
 @Entity("cards")
 export class Card {
@@ -58,4 +60,15 @@ export class Card {
 
   @OneToMany(() => Checklist, (checklist) => checklist.card)
   checklists!: Checklist[];
+  @Column({ nullable: true })
+  cover_color!: string;
+
+  @Column({ nullable: true })
+  cover_image_url!: string;
+
+  @OneToMany(() => CardMember, (member) => member.card)
+  members!: CardMember[];
+
+  @OneToMany(() => Comment, (comment) => comment.card)
+  comments!: Comment[];
 }

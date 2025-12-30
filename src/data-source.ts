@@ -19,6 +19,8 @@ import { TemplateCard } from "./entities/template-card.entity";
 import { Label } from "./entities/label.entity";
 import { Checklist } from "./entities/checklist.entity";
 import { ChecklistItem } from "./entities/checklist-item.entity";
+import { CardMember } from "./entities/card-member.entity";
+import { Comment } from "./entities/comment.entity";
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -43,6 +45,8 @@ export const AppDataSource = new DataSource({
     BoardInvitation,
     List,
     Card,
+    CardMember,
+    Comment,
     TemplateBoard,
     TemplateList,
     TemplateCard,

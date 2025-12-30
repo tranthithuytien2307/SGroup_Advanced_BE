@@ -15,6 +15,8 @@ import { WorkspaceInvitation } from "./workspace-invitations.entity";
 import { Role } from "./role.entity";
 import { TemplateBoard } from "./template-board.entity";
 
+import { CardMember } from "./card-member.entity";
+
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn()
@@ -70,6 +72,9 @@ export class User {
 
   @OneToMany(() => Board, (board) => board.created_by)
   createdBoards!: Board[];
+
+  @OneToMany(() => CardMember, (member) => member.user)
+  cardMemberships!: CardMember[];
 
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;

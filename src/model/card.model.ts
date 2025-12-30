@@ -22,13 +22,26 @@ class CardModel {
   async getById(id: number): Promise<Card | null> {
     return await this.cardRepository.findOne({
       where: { id },
-      relations: ["list"],
+      relations: ["list", "members", "members.user"],
+    });
+  }
+
+  async getCardDetails(id: number): Promise<Card | null> {
+    return await this.cardRepository.findOne({
+      where: { id },
+      relations: ["list", "members", "members.user", "comments", "comments.user"],
+      order: {
+        comments: {
+          created_at: "ASC",
+        },
+      },
     });
   }
 
   async getCardsByListId(listId: number): Promise<Card[]> {
     return await this.cardRepository.find({
       where: { list_id: listId, is_archived: false },
+      relations: ["members", "members.user"],
       order: { position: "ASC" },
     });
   }

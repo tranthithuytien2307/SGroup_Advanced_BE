@@ -8,6 +8,11 @@ import {
 } from "../handler/error.response";
 import { Card } from "../entities/card.entity";
 import { List } from "../entities/list.entity";
+import boardModel from "../model/board.model";
+import { AppDataSource } from "../data-source";
+import { BoardMember } from "../entities/board-member.entity";
+import { User } from "../entities/user.entity";
+import { CardMember } from "../entities/card-member.entity";
 
 class CardService {
   async createCard(listId: number, title: string) {
@@ -32,6 +37,8 @@ class CardService {
 
       if (data.title !== undefined) card.title = data.title;
       if (data.description !== undefined) card.description = data.description;
+      if (data.cover_color !== undefined) card.cover_color = data.cover_color;
+      if (data.cover_image_url !== undefined) card.cover_image_url = data.cover_image_url;
 
       return await cardModel.updateCard(card);
     } catch (e) {
@@ -39,6 +46,65 @@ class CardService {
       throw new InternalServerError("Failed to update card");
     }
   }
+
+  async addMember(cardId: number, userId: number) {
+    try {
+      const card = await cardModel.getById(cardId);
+      if (!card) throw new NotFoundError("Card not found");
+
+      const list = await listModel.getListById(card.list_id);
+      if (!list) throw new NotFoundError("List not found");
+
+      const boardMemberRepo = AppDataSource.getRepository(BoardMember);
+      const isMember = await boardMemberRepo.findOne({
+        where: { board: { id: list.board_id }, user: { id: userId } },
+      });
+
+      if (!isMember) {
+        throw new BadRequestError("User is not a member of the board");
+      }
+
+      const cardMemberRepo = AppDataSource.getRepository(CardMember);
+      const existingMember = await cardMemberRepo.findOne({
+        where: { card_id: cardId, user_id: userId },
+      });
+
+      if (existingMember) {
+        throw new BadRequestError("User is already a member of this card");
+      }
+
+      const newMember = cardMemberRepo.create({
+        card_id: cardId,
+        user_id: userId,
+      });
+      await cardMemberRepo.save(newMember);
+
+      return await cardModel.getCardDetails(cardId);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to add member to card");
+    }
+  }
+
+  async removeMember(cardId: number, userId: number) {
+    try {
+      const cardMemberRepo = AppDataSource.getRepository(CardMember);
+      const member = await cardMemberRepo.findOne({
+        where: { card_id: cardId, user_id: userId },
+      });
+
+      if (!member) {
+        throw new BadRequestError("User is not a member of this card");
+      }
+
+      await cardMemberRepo.remove(member);
+      return await cardModel.getCardDetails(cardId);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to remove member from card");
+    }
+  }
+
 
   async archiveCard(id: number) {
     try {
@@ -111,7 +177,12 @@ class CardService {
     }
   }
 
-  async moveCard(id: number, toListId: number, newIndex: number) {
+    async moveCard(
+    id: number,
+    toBoardId: number,
+    toListId: number,
+    newIndex: number
+  ) {
     try {
       const card = await cardModel.getById(id);
       if (!card) throw new NotFoundError("Card not found");
@@ -119,23 +190,25 @@ class CardService {
       const fromList = await listModel.getListById(card.list_id);
       if (!fromList) throw new NotFoundError("Source list not found");
 
+      const toBoard = await boardModel.getById(toBoardId);
+      if (!toBoard) throw new NotFoundError("Target board not found");
+
       const toList = await listModel.getListById(toListId);
       if (!toList) throw new NotFoundError("Target list not found");
 
-      if (fromList.board_id !== toList.board_id) {
-        throw new BadRequestError("Cannot move card across different boards");
+      if (toList.board_id !== toBoardId) {
+        throw new BadRequestError("Target list does not belong to target board");
       }
 
       const targetCards = await cardModel.getCardsByListId(toListId);
+
       if (newIndex < 0 || newIndex > targetCards.length) {
         throw new BadRequestError("Invalid new index");
       }
 
-      const newPos = this.computeNewPosition(targetCards, newIndex);
-
       card.list_id = toListId;
       card.list = { id: toListId } as List;
-      card.position = newPos;
+      card.position = this.computeNewPosition(targetCards, newIndex);
 
       await cardModel.updateCard(card);
 
@@ -150,34 +223,51 @@ class CardService {
     }
   }
 
-  async copyCard(id: number, toListId: number, newTitle?: string) {
+
+  async copyCard(
+    id: number,
+    toBoardId: number,
+    toListId: number,
+    newIndex: number,
+    newTitle?: string
+  ) {
     try {
-      const source = await cardModel.getById(id);
-      if (!source) throw new NotFoundError("Source card not found");
+      const sourceCard = await cardModel.getById(id);
+      if (!sourceCard) throw new NotFoundError("Source card not found");
+
+      const fromList = await listModel.getListById(sourceCard.list_id);
+      if (!fromList) throw new NotFoundError("Source list not found");
+
+      const toBoard = await boardModel.getById(toBoardId);
+      if (!toBoard) throw new NotFoundError("Target board not found");
 
       const toList = await listModel.getListById(toListId);
       if (!toList) throw new NotFoundError("Target list not found");
 
-      const fromList = await listModel.getListById(source.list_id);
-      if (!fromList) throw new NotFoundError("Source list not found");
-
-      if (fromList.board_id !== toList.board_id) {
-        throw new BadRequestError(
-          "Cannot copy card across different boards (current rule)"
-        );
+      if (toList.board_id !== toBoardId) {
+        throw new BadRequestError("Target list does not belong to target board");
       }
 
-      const count = await cardModel.countCardsByListId(toListId);
-      const position = (count + 1) * 100;
+      const targetCards = await cardModel.getCardsByListId(toListId);
+
+      if (newIndex < 0 || newIndex > targetCards.length) {
+        throw new BadRequestError("Invalid new index");
+      }
+
+      const newPosition = this.computeNewPosition(targetCards, newIndex);
 
       const created = await cardModel.createCard(
         toListId,
-        newTitle ?? `${source.title} (copy)`,
-        position
+        newTitle ?? `${sourceCard.title} (copy)`,
+        newPosition
       );
 
-      created.description = source.description;
+      created.description = sourceCard.description;
       await cardModel.updateCard(created);
+
+      if (this.shouldReindex(targetCards)) {
+        await this.reindexList(toListId);
+      }
 
       return created;
     } catch (e) {
@@ -185,6 +275,7 @@ class CardService {
       throw new InternalServerError("Failed to copy card");
     }
   }
+
 
   private computeNewPosition(sortedCards: Card[], newIndex: number): number {
     if (sortedCards.length === 0) return 100;
