@@ -12,6 +12,17 @@ export const ChecklistSchema = {
         .openapi({ description: "Checklist ID" }),
     })
     .openapi("ChecklistIdParams"),
+  GetChecklistIdParam: z
+    .object({
+      id: z.string().regex(/^\d+$/, "Checklist ID must be a number"),
+    })
+    .openapi("GetChecklistIdParam"),
+
+  UpdateChecklistTitle: z
+    .object({
+      title: z.string().min(1, "Title is required"),
+    })
+    .openapi("UpdateChecklistTitleBody"),
 
   ItemIdParam: z
     .object({

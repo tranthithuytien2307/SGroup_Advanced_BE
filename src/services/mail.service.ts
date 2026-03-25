@@ -27,23 +27,46 @@ class MailService {
 
     await this.transporter.sendMail(mailOptions);
   }
-  async sendEmail(to: string, resetLink: string) {
+  async sendEmail(to: string, resetToken: string) {
     await this.transporter.sendMail({
       from: process.env.EMAIL_USER,
       to,
-      subject: "Password Reset Request",
+      subject: "Your Password Reset OTP Code",
       html: `
-      <h2>Password Reset Request</h2>
-      <p>Click the button below to reset your password. This link will expire in <b>15 minutes</b>.</p>
-      <a href="${resetLink}" style="display:inline-block;padding:10px 20px;background:#007bff;color:#fff;text-decoration:none;border-radius:5px;">Reset Password</a>
-      `,
+      <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;">
+        <h2 style="color: #333;">Password Reset Request</h2>
+        
+        <p>You requested to reset your password.</p>
+        <p>Please enter the OTP code below on the website to continue:</p>
+        
+        <div style="
+          font-size: 28px;
+          font-weight: bold;
+          letter-spacing: 4px;
+          text-align: center;
+          padding: 15px;
+          margin: 20px 0;
+          background: #f4f6f8;
+          border-radius: 8px;
+          color: #007bff;
+        ">
+          ${resetToken}
+        </div>
+
+        <p>This code will expire in <b>5 minutes</b>.</p>
+
+        <p style="color: #888; font-size: 13px;">
+          If you did not request a password reset, please ignore this email.
+        </p>
+      </div>
+    `,
     });
   }
 
   async sendInvitationEmail(
     email: string,
     token: string,
-    workspaceName: string
+    workspaceName: string,
   ) {
     const link = `${process.env.BASE_URL}/api/workspace-member/invite/accept?token=${token}`;
 
@@ -66,7 +89,7 @@ class MailService {
   async sendInvitationEmailForBoard(
     email: string,
     token: string,
-    boardName: string
+    boardName: string,
   ) {
     const link = `${process.env.BASE_URL}/api/board/invite-email/accept?token=${token}`;
 

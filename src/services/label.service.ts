@@ -8,7 +8,7 @@ class LabelService {
   async createLabel(
     board_id: number,
     name: string | null,
-    color: string
+    color: string,
   ): Promise<Label> {
     try {
       return await labelModel.createLabel(board_id, name, color);
@@ -31,9 +31,58 @@ class LabelService {
     }
   }
 
+  async getLabelsByCardId(cardId: number): Promise<Label[]> {
+    try {
+      return await labelModel.getLabelByCardId(cardId);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new InternalServerError("Failed to get labels by card id");
+    }
+  }
+
+  async updateLabel(
+    id: number,
+    payload: {
+      name?: string | null;
+      color?: string;
+    },
+  ): Promise<Label> {
+    try {
+      const label = await labelModel.getLabelById(id);
+      if (!label) {
+        throw new NotFoundError("Label not found");
+      }
+
+      return await labelModel.updateLabel(id, payload);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new InternalServerError("Failed to update label");
+    }
+  }
+
+  async deleteLabel(id: number): Promise<void> {
+    try {
+      const label = await labelModel.getLabelById(id);
+      if (!label) {
+        throw new NotFoundError("Label not found");
+      }
+
+      return await labelModel.deleteLabel(id);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new InternalServerError("Failed to delete label");
+    }
+  }
+
   async attachLabelsToCard(
     card_id: number,
-    label_ids: number[]
+    label_ids: number[],
   ): Promise<void> {
     try {
       const card = await cardModel.getById(card_id);
@@ -61,13 +110,13 @@ class LabelService {
 
   async detachLabelsFromCard(
     card_id: number,
-    label_ids: number[]
+    label_ids: number[],
   ): Promise<void> {
     const card = await cardModel.getById(card_id);
     if (!card) throw new NotFoundError("Card not found");
 
     return AppDataSource.manager.transaction((manager) =>
-      labelModel.detachLabelFromCard(manager, card_id, label_ids)
+      labelModel.detachLabelFromCard(manager, card_id, label_ids),
     );
   }
 }

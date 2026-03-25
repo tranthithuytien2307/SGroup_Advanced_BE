@@ -8,7 +8,7 @@ class ListModel {
     boardId: number,
     name: string,
     coverUrl: string | null,
-    position: number
+    position: number,
   ): Promise<List> {
     const newList = this.listRepository.create({
       name,
@@ -30,7 +30,10 @@ class ListModel {
   async getListsByBoardId(boardId: number): Promise<List[]> {
     return await this.listRepository.find({
       where: { board_id: boardId, is_archived: false },
-      order: { position: "ASC" },
+      order: {
+        position: "ASC", 
+        cards: { position: "ASC" }, 
+      },
       relations: ["cards"],
     });
   }

@@ -22,7 +22,7 @@ class ChecklistModel {
 
   async addItemToChecklist(
     checklist_id: number,
-    content: string
+    content: string,
   ): Promise<ChecklistItem> {
     const item = this.checklistItemRepository.create({
       checklist_id,
@@ -47,13 +47,34 @@ class ChecklistModel {
     return item;
   }
 
+  async getAll(): Promise<Checklist[]> {
+    return await this.checklistRepository.find({ relations: ["items"] });
+  }
+
+  async getById(checklist_id: number): Promise<Checklist | null> {
+    return await this.checklistRepository.findOne({
+      where: { id: checklist_id },
+      relations: ["items"],
+    });
+  }
+
+  async updateTitle(checklist_id: number, title: string): Promise<Checklist> {
+    await this.checklistRepository.update({ id: checklist_id }, { title });
+
+    const checklist = await this.getById(checklist_id);
+    if (!checklist) {
+      throw new NotFoundError("Checklist not found");
+    }
+    return checklist;
+  }
+
   async toggleItem(
     item_id: number,
-    is_completed: boolean
+    is_completed: boolean,
   ): Promise<ChecklistItem> {
     await this.checklistItemRepository.update(
       { id: item_id },
-      { is_completed }
+      { is_completed },
     );
     const item = await this.checklistItemRepository.findOne({
       where: { id: item_id },

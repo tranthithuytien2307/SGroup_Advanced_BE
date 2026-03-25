@@ -9,9 +9,43 @@ import { UserSchema } from "../schemas/user.schema";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
+import { uploadAvatarMulter } from "../utils/cloudinary.storage";
 
 export const userRegistry = new OpenAPIRegistry();
 const router = Router();
+// ===============================
+// USER: Update avatar
+// Permission: update_self
+// ===============================
+userRegistry.registerPath({
+  method: "put",
+  path: "/api/user/avatar",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "multipart/form-data": {
+          schema: z.object({
+            avatar: z.any(),
+          }),
+        },
+      },
+    },
+  },
+  responses: createApiResponse(
+    z.object({ avatar_url: z.string() }),
+    "Update success",
+  ),
+});
+
+router.put(
+  "/user/avatar",
+  authMiddleware,
+  authorization("update_self"),
+  uploadAvatarMulter.single("avatar"),
+  asyncHandler(userController.uploadAvatar),
+);
 
 // ===============================
 // ADMIN & STAFF: View all users
@@ -29,7 +63,7 @@ router.get(
   "/users",
   authMiddleware,
   authorization("view_all"),
-  asyncHandler(userController.getUsers)
+  asyncHandler(userController.getUsers),
 );
 
 // ===============================
@@ -52,7 +86,7 @@ router.get(
   authorization("view_self"),
   authorization("view_all"),
   validateRequest(UserSchema.GetById),
-  asyncHandler(userController.getUser)
+  asyncHandler(userController.getUser),
 );
 
 // ===============================
@@ -75,7 +109,7 @@ router.post(
   authMiddleware,
   authorization("create_user"),
   validateRequest(UserSchema.Create),
-  asyncHandler(userController.createUser)
+  asyncHandler(userController.createUser),
 );
 
 // ===============================
@@ -102,7 +136,7 @@ router.put(
   authorization("update_self"),
   authorization("update_user"),
   validateRequest(UserSchema.Update),
-  asyncHandler(userController.updateUser)
+  asyncHandler(userController.updateUser),
 );
 
 // ===============================
@@ -123,7 +157,7 @@ router.delete(
   authMiddleware,
   authorization("delete_user"),
   validateRequest(UserSchema.Delete),
-  asyncHandler(userController.deleteUser)
+  asyncHandler(userController.deleteUser),
 );
 
 // ===============================
@@ -142,27 +176,7 @@ router.put(
   "/user/profile",
   authMiddleware,
   authorization("update_self"),
-  asyncHandler(userController.updateProfile)
-);
-
-// ===============================
-// USER: Update avatar
-// Permission: update_self
-// ===============================
-userRegistry.registerPath({
-  method: "put",
-  path: "/api/user/avatar",
-  tags: ["User"],
-  security: [{ BearerAuth: [] }],
-  responses: createApiResponse(z.null(), "Update user avatar"),
-});
-
-router.put(
-  "/user/avatar",
-  authMiddleware,
-  authorization("update_self"),
-  upload.single("avatar"),
-  asyncHandler(userController.uploadAvatar)
+  asyncHandler(userController.updateProfile),
 );
 
 export default router;

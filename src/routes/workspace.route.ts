@@ -23,7 +23,21 @@ workspaceRegistry.registerPath({
 router.get(
   "/",
   authMiddleware,
-  asyncHandler(workspaceController.getAllWorkspace)
+  asyncHandler(workspaceController.getAllWorkspace),
+);
+
+workspaceRegistry.registerPath({
+  method: "get",
+  path: "/api/workspace/byUser",
+  tags: ["Workspace"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.null(), "Get all workspaces"),
+});
+
+router.get(
+  "/byUser",
+  authMiddleware,
+  asyncHandler(workspaceController.getAllWorkspaceByUser),
 );
 
 workspaceRegistry.registerPath({
@@ -38,9 +52,9 @@ workspaceRegistry.registerPath({
 router.get(
   "/:workspace_id",
   authMiddleware,
-  validateRequest(WorkspaceSchema.GetById, 'params'),
+  validateRequest(WorkspaceSchema.GetById, "params"),
   authorizeWorkspace(["owner", "admin", "member", "viewer"]),
-  asyncHandler(workspaceController.getWorkspaceById)
+  asyncHandler(workspaceController.getWorkspaceById),
 );
 
 workspaceRegistry.registerPath({
@@ -60,7 +74,7 @@ router.post(
   "/",
   authMiddleware,
   validateRequest(WorkspaceSchema.Create, "body"),
-  asyncHandler(workspaceController.createWorkspace)
+  asyncHandler(workspaceController.createWorkspace),
 );
 
 workspaceRegistry.registerPath({
@@ -82,7 +96,7 @@ router.put(
   authMiddleware,
   validateRequest(WorkspaceSchema.Update),
   authorizeWorkspace(["owner", "admin", "member"]),
-  asyncHandler(workspaceController.updateWorkspace)
+  asyncHandler(workspaceController.updateWorkspace),
 );
 
 workspaceRegistry.registerPath({
@@ -97,9 +111,9 @@ workspaceRegistry.registerPath({
 router.delete(
   "/:workspace_id",
   authMiddleware,
-  validateRequest(WorkspaceSchema.Delete),
+  validateRequest(WorkspaceSchema.Delete, "params"),
   authorizeWorkspace(["owner"]),
-  asyncHandler(workspaceController.deleteWorkspace)
+  asyncHandler(workspaceController.deleteWorkspace),
 );
 
 export default router;

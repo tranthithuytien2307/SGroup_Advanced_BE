@@ -10,7 +10,7 @@ class LabelModel {
   async createLabel(
     board_id: number,
     name: string | null,
-    color: string
+    color: string,
   ): Promise<Label> {
     const label = this.labelRepository.create({
       board_id,
@@ -26,10 +26,23 @@ class LabelModel {
     });
   }
 
+  async getLabelByCardId(card_id: number): Promise<Label[]> {
+    const card = await this.cardRepository.findOne({
+      where: { id: card_id },
+      relations: ["labels"],
+    });
+
+    if (!card) {
+      throw new Error("Card not found");
+    }
+
+    return card.labels;
+  }
+
   async attachLabelToCard(
     manager: EntityManager,
     card_id: number,
-    label_id: number
+    label_id: number,
   ): Promise<void> {
     const cardRepo = manager.getRepository(Card);
     const labelRepo = manager.getRepository(Label);
@@ -67,7 +80,7 @@ class LabelModel {
   async detachLabelFromCard(
     manager: EntityManager,
     card_id: number,
-    label_ids: number[]
+    label_ids: number[],
   ): Promise<void> {
     const cardRepo = manager.getRepository(Card);
 
@@ -81,6 +94,44 @@ class LabelModel {
     card.labels = card.labels.filter((label) => !label_ids.includes(label.id));
 
     await cardRepo.save(card);
+  }
+
+  async updateLabel(
+    id: number,
+    payload: {
+      name?: string | null;
+      color?: string;
+    },
+  ): Promise<Label> {
+    const label = await this.labelRepository.findOne({
+      where: { id },
+    });
+
+    if (!label) {
+      throw new Error("Label not found");
+    }
+
+    if (payload.name !== undefined) {
+      label.name = payload.name;
+    }
+
+    if (payload.color !== undefined) {
+      label.color = payload.color;
+    }
+
+    return await this.labelRepository.save(label);
+  }
+
+  async deleteLabel(id: number): Promise<void> {
+    const label = await this.labelRepository.findOne({
+      where: { id },
+    });
+
+    if (!label) {
+      throw new Error("Label not found");
+    }
+
+    await this.labelRepository.remove(label);
   }
 }
 

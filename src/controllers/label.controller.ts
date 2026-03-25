@@ -12,9 +12,9 @@ class LabelController {
         ResponseStatus.Sucess,
         "Label created successfully",
         data,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -26,9 +26,60 @@ class LabelController {
         ResponseStatus.Sucess,
         "Label retrieved successfully",
         data,
-        200
+        200,
       ),
-      res
+      res,
+    );
+  };
+
+  getLabelsByCardId = async (req: Request, res: Response) => {
+    const cardId = parseInt(req.params.card_id, 10);
+
+    const data = await labelService.getLabelsByCardId(cardId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Labels retrieved successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
+  updateLabel = async (req: Request, res: Response) => {
+    const { label_id, name, color } = req.body;
+
+    const data = await labelService.updateLabel(label_id, {
+      name,
+      color,
+    });
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Label updated successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
+  deleteLabel = async (req: Request, res: Response) => {
+    const { label_id } = req.params;
+
+    await labelService.deleteLabel(Number(label_id));
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Label deleted successfully",
+        null,
+        200,
+      ),
+      res,
     );
   };
 
@@ -42,9 +93,9 @@ class LabelController {
         ResponseStatus.Sucess,
         "Labels attached to card successfully",
         data,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -58,9 +109,9 @@ class LabelController {
         ResponseStatus.Sucess,
         "Labels detached successfully",
         null,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 }

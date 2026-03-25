@@ -14,9 +14,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Create card successfully",
         card,
-        201
+        201,
       ),
-      res
+      res,
     );
   }
 
@@ -31,9 +31,24 @@ class CardController {
         ResponseStatus.Sucess,
         "Update card successfully",
         card,
-        200
+        200,
       ),
-      res
+      res,
+    );
+  }
+
+  async deleteCard(req: Request, res: Response) {
+    const id = parseInt(req.params.id);
+
+    await cardService.deleteCard(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Delete card successfully",
+        null,
+        200,
+      ),
+      res,
     );
   }
 
@@ -47,9 +62,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Archive card successfully",
         card,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -63,9 +78,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Unarchive card successfully",
         card,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -80,9 +95,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Reorder card successfully",
         cards,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -97,9 +112,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Move card successfully",
         cards,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -112,7 +127,7 @@ class CardController {
       toBoardId,
       toListId,
       newIndex,
-      newTitle
+      newTitle,
     );
 
     return handleServiceResponse(
@@ -120,9 +135,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Copy card successfully",
         card,
-        201
+        201,
       ),
-      res
+      res,
     );
   }
 
@@ -132,18 +147,35 @@ class CardController {
     const data = await cardService.setDates(
       card_id,
       start_date ? new Date(start_date) : null,
-      deadline_date ? new Date(deadline_date) : null
+      deadline_date ? new Date(deadline_date) : null,
     );
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Card dates updated successfully",
         data,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
+
+  removeDeadline = async (req: Request, res: Response) => {
+    const { card_id } = req.body;
+
+    const data = await cardService.removeDeadline(card_id);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Deadline removed successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
   async addMember(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     const { userId } = req.body;
@@ -155,9 +187,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Add member successfully",
         card,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -170,9 +202,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Card marked as completed",
         data,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -187,9 +219,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Remove member successfully",
         card,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -203,9 +235,9 @@ class CardController {
         ResponseStatus.Sucess,
         "Card date status retrieved",
         data,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 }

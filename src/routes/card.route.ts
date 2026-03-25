@@ -36,7 +36,7 @@ cardRegistry.registerPath({
 router.post("/", authMiddleware, asyncHandler(cardController.createCard));
 
 cardRegistry.registerPath({
-  method: "post",
+  method: "patch",
   path: "/api/card/date",
   tags: ["Card"],
   security: [{ BearerAuth: [] }],
@@ -52,13 +52,57 @@ cardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Set card dates"),
 });
 
-router.post(
+router.patch(
   "/date",
   authMiddleware,
   authorizeCardById(["admin", "member"]),
   validateRequest(CardSchema.SetDates, "body"),
-  asyncHandler(cardController.setDates)
+  asyncHandler(cardController.setDates),
 );
+
+cardRegistry.registerPath({
+  method: "patch",
+  path: "/api/card/remove-deadline",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.RemoveDeadline,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Remove deadline"),
+});
+
+router.patch(
+  "/remove-deadline",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  validateRequest(CardSchema.RemoveDeadline, "body"),
+  asyncHandler(cardController.removeDeadline),
+);
+
+cardRegistry.registerPath({
+  method: "delete",
+  path: "/api/card/:id",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: createApiResponse(z.null(), "Delete card"),
+});
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  asyncHandler(cardController.deleteCard),
+);
+
 cardRegistry.registerPath({
   method: "put",
   path: "/api/card/:id",
@@ -93,7 +137,7 @@ cardRegistry.registerPath({
 router.patch(
   "/:id/archive",
   authMiddleware,
-  asyncHandler(cardController.archiveCard)
+  asyncHandler(cardController.archiveCard),
 );
 
 cardRegistry.registerPath({
@@ -110,7 +154,7 @@ cardRegistry.registerPath({
 router.patch(
   "/:id/unarchive",
   authMiddleware,
-  asyncHandler(cardController.unarchiveCard)
+  asyncHandler(cardController.unarchiveCard),
 );
 
 cardRegistry.registerPath({
@@ -134,7 +178,7 @@ router.post(
   "/complete",
   authMiddleware,
   authorizeCardById(["admin", "member"]),
-  asyncHandler(cardController.markCompleted)
+  asyncHandler(cardController.markCompleted),
 );
 
 cardRegistry.registerPath({
@@ -147,7 +191,7 @@ cardRegistry.registerPath({
   },
   responses: createApiResponse(
     CardSchema.CardDateStatusResponse,
-    "Get card date status"
+    "Get card date status",
   ),
 });
 
@@ -156,7 +200,7 @@ router.get(
   authMiddleware,
   authorizeCardById(["admin", "member", "viewer"]),
   validateRequest(CardSchema.CardIdParam, "params"),
-  asyncHandler(cardController.getStatus)
+  asyncHandler(cardController.getStatus),
 );
 
 cardRegistry.registerPath({
@@ -180,7 +224,7 @@ cardRegistry.registerPath({
 router.post(
   "/:id/reorder",
   authMiddleware,
-  asyncHandler(cardController.reorderCard)
+  asyncHandler(cardController.reorderCard),
 );
 
 cardRegistry.registerPath({
@@ -201,7 +245,7 @@ cardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Move card"),
 });
 
-router.post("/:id/move", authMiddleware, asyncHandler(cardController.moveCard));
+router.patch("/:id/move", authMiddleware, asyncHandler(cardController.moveCard));
 
 cardRegistry.registerPath({
   method: "post",
@@ -244,7 +288,7 @@ cardRegistry.registerPath({
 router.post(
   "/:id/member",
   authMiddleware,
-  asyncHandler(cardController.addMember)
+  asyncHandler(cardController.addMember),
 );
 
 cardRegistry.registerPath({
@@ -261,7 +305,7 @@ cardRegistry.registerPath({
 router.delete(
   "/:id/member/:userId",
   authMiddleware,
-  asyncHandler(cardController.removeMember)
+  asyncHandler(cardController.removeMember),
 );
 
 // --- Comments ---
@@ -287,7 +331,7 @@ cardRegistry.registerPath({
 router.post(
   "/:cardId/comment",
   authMiddleware,
-  asyncHandler(commentController.createComment)
+  asyncHandler(commentController.createComment),
 );
 
 cardRegistry.registerPath({
@@ -311,7 +355,7 @@ cardRegistry.registerPath({
 router.put(
   "/comment/:commentId",
   authMiddleware,
-  asyncHandler(commentController.updateComment)
+  asyncHandler(commentController.updateComment),
 );
 
 cardRegistry.registerPath({
@@ -328,7 +372,7 @@ cardRegistry.registerPath({
 router.delete(
   "/comment/:commentId",
   authMiddleware,
-  asyncHandler(commentController.deleteComment)
+  asyncHandler(commentController.deleteComment),
 );
 
 export default router;

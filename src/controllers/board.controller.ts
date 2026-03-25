@@ -189,7 +189,7 @@ class BoardController {
       throw new BadRequestError("Invalid Workspace Id");
     }
     const data = await boardService.getBoardsByWorkspaceId(workspaceId);
-    if (!data || data.length === 0) {
+    if (!data) {
       throw new NotFoundError("No boards found for this workspace");
     }
     return handleServiceResponse(

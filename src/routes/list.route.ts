@@ -25,7 +25,7 @@ router.get(
   "/board/:board_id",
   authMiddleware,
   authorizeBoard(["admin", "member", "viewer"]),
-  asyncHandler(listController.getListsByBoard)
+  asyncHandler(listController.getListsByBoard),
 );
 
 listRegistery.registerPath({
@@ -49,7 +49,7 @@ router.post(
   "/",
   authMiddleware,
   authorizeBoard(["admin", "member"]),
-  asyncHandler(listController.createList)
+  asyncHandler(listController.createList),
 );
 
 listRegistery.registerPath({
@@ -68,7 +68,25 @@ router.patch(
   "/:id",
   authMiddleware,
   authorizeListById(["admin", "member"]),
-  asyncHandler(listController.updateList)
+  asyncHandler(listController.updateList),
+);
+
+listRegistery.registerPath({
+  method: "delete",
+  path: "/api/list/:id",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: ListSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Delete List"),
+});
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  authorizeListById(["admin", "member"]),
+  asyncHandler(listController.deleteList),
 );
 
 listRegistery.registerPath({
@@ -87,7 +105,7 @@ router.post(
   "/:id/move",
   authMiddleware,
   authorizeListById(["admin", "member"]),
-  asyncHandler(listController.moveList)
+  asyncHandler(listController.moveList),
 );
 
 listRegistery.registerPath({
@@ -106,7 +124,7 @@ router.post(
   "/:id/copy",
   authMiddleware,
   authorizeListById(["admin", "member"]),
-  asyncHandler(listController.copyList)
+  asyncHandler(listController.copyList),
 );
 
 listRegistery.registerPath({
@@ -125,7 +143,7 @@ router.patch(
   "/:id/reorder",
   authMiddleware,
   authorizeListById(["admin", "member"]),
-  asyncHandler(listController.reorderList)
+  asyncHandler(listController.reorderList),
 );
 
 export default router;

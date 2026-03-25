@@ -16,7 +16,7 @@ class AuthModel {
           "name",
           "isVerified",
           "verifyToken",
-          "role",
+          "role_id",
           "refreshToken",
         ],
       });
@@ -31,7 +31,7 @@ class AuthModel {
   async createUser(
     email: string,
     hashedPassword: string,
-    user: string
+    user: string,
   ): Promise<User> {
     try {
       const userRepository = AppDataSource.getRepository(User);
@@ -42,6 +42,7 @@ class AuthModel {
       newUser.name = user;
       newUser.isVerified = false;
       newUser.verifyToken = crypto.randomBytes(32).toString("hex");
+      newUser.role_id = 3;
 
       return await userRepository.save(newUser);
     } catch (error) {
@@ -55,7 +56,7 @@ class AuthModel {
     name: string,
     provider: string,
     provider_id: string,
-    avatar_url?: string
+    avatar_url?: string,
   ): Promise<User> {
     try {
       const userRepository = AppDataSource.getRepository(User);
@@ -79,7 +80,7 @@ class AuthModel {
 
   async updateRefreshToken(
     userId: number,
-    refreshToken: string
+    refreshToken: string,
   ): Promise<void> {
     try {
       const userRepository = AppDataSource.getRepository(User);
@@ -113,10 +114,10 @@ class AuthModel {
       throw new Error("Failed to get user by ID");
     }
   }
-  
+
   async updatePasswordByEmail(
     email: string,
-    hashedPassword: string
+    hashedPassword: string,
   ): Promise<void> {
     try {
       const userRepository = AppDataSource.getRepository(User);

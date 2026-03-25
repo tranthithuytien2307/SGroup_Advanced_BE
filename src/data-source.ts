@@ -21,6 +21,7 @@ import { Checklist } from "./entities/checklist.entity";
 import { ChecklistItem } from "./entities/checklist-item.entity";
 import { CardMember } from "./entities/card-member.entity";
 import { Comment } from "./entities/comment.entity";
+import { Attachment } from "./entities/attachment.entity";
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -53,5 +54,6 @@ export const AppDataSource = new DataSource({
     Label,
     Checklist,
     ChecklistItem,
+    Attachment,
   ],
 });

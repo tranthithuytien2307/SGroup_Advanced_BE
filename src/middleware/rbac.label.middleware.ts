@@ -1,50 +1,43 @@
 import { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../data-source";
-import { ChecklistItem } from "../entities/checklist-item.entity";
+import { Label } from "../entities/label.entity";
 import { BoardMember, BoardRole } from "../entities/board-member.entity";
 import {
   AuthFailureError,
   ForbiddenError,
   InternalServerError,
-  NotFoundError,
 } from "../handler/error.response";
 
-export const authorizeChecklistItemById = (requiredRoles: BoardRole[]) => {
+export const authorizeLabelById = (requiredRoles: BoardRole[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = (req as any).user;
       if (!user) throw new AuthFailureError("Unauthorized");
 
-      const itemId =
-        req.params.item_id ||
+      const labelId =
+        req.params.label_id ||
         req.params.id ||
-        req.query.item_id ||
-        req.body.item_id;
+        req.query.label_id ||
+        req.body.label_id;
 
-      if (Number.isNaN(Number(itemId))) {
-        throw new ForbiddenError("Invalid checklist item id");
+      if (!labelId || Number.isNaN(Number(labelId))) {
+        throw new ForbiddenError("Invalid label_id");
       }
 
-      const itemRepo = AppDataSource.getRepository(ChecklistItem);
+      const labelRepo = AppDataSource.getRepository(Label);
 
-      const item = await itemRepo.findOne({
-        where: { id: Number(itemId) },
-        relations: [
-          "checklist",
-          "checklist.card",
-          "checklist.card.list",
-          "checklist.card.list.board",
-        ],
+      const label = await labelRepo.findOne({
+        where: { id: Number(labelId) },
       });
 
-      if (!item) throw new NotFoundError("Checklist item not found");
+      if (!label) throw new ForbiddenError("Label not found");
 
       const boardMemberRepo = AppDataSource.getRepository(BoardMember);
 
       const membership = await boardMemberRepo.findOne({
         where: {
           user: { id: user.id },
-          board: { id: item.checklist.card.list.board.id },
+          board: { id: label.board_id },
         },
       });
 
@@ -60,15 +53,13 @@ export const authorizeChecklistItemById = (requiredRoles: BoardRole[]) => {
         );
       }
 
-      // attach for downstream usage
-      (req as any).checklistItem = item;
-      (req as any).checklist = item.checklist;
-      (req as any).card = item.checklist.card;
-      (req as any).boardId = item.checklist.card.list.board.id;
+      // attach để dùng tiếp
+      (req as any).label = label;
+      (req as any).boardId = label.board_id;
 
       next();
     } catch (error) {
-      console.error("ChecklistItem RBAC error:", error);
+      console.error("Label RBAC error:", error);
 
       if (
         error instanceof AuthFailureError ||
@@ -78,7 +69,7 @@ export const authorizeChecklistItemById = (requiredRoles: BoardRole[]) => {
       }
 
       throw new InternalServerError(
-        "Internal Server Error during checklist item authorization",
+        "Internal Server Error during label authorization",
       );
     }
   };

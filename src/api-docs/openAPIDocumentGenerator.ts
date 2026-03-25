@@ -5,6 +5,9 @@ import { workspaceMemberRegistry } from "../routes/workspace-member.route";
 import { userRegistry } from "../routes/user.route";
 import { workspaceRegistry } from "../routes/workspace.route";
 import { templateRegistry } from "../routes/template.route";
+import { cardRegistry } from "../routes/card.route";
+import { labelRegistry } from "../routes/label.route";
+import { checklistRegistry } from "../routes/checklist.route";
 import {
   OpenApiGeneratorV3,
   OpenAPIRegistry,
@@ -20,7 +23,10 @@ export function generateOpenAPIDocument(): ReturnType<
     workspaceRegistry,
     boardRegistry,
     workspaceMemberRegistry,
-    templateRegistry
+    templateRegistry,
+    cardRegistry,
+    labelRegistry,
+    checklistRegistry,
   ]);
 
   registry.registerComponent("securitySchemes", "BearerAuth", {

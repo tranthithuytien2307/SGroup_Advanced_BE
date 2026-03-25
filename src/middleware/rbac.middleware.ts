@@ -11,6 +11,7 @@ import {
 export const authorization = (requiredPermission: string) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log("Current user in req:", (req as any).user);
       const user = (req as any).user;
       if (!user) {
         throw new AuthFailureError("Unauthorized");

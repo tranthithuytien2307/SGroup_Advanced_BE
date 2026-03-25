@@ -38,7 +38,8 @@ class CardService {
       if (data.title !== undefined) card.title = data.title;
       if (data.description !== undefined) card.description = data.description;
       if (data.cover_color !== undefined) card.cover_color = data.cover_color;
-      if (data.cover_image_url !== undefined) card.cover_image_url = data.cover_image_url;
+      if (data.cover_image_url !== undefined)
+        card.cover_image_url = data.cover_image_url;
 
       return await cardModel.updateCard(card);
     } catch (e) {
@@ -104,7 +105,6 @@ class CardService {
       throw new InternalServerError("Failed to remove member from card");
     }
   }
-
 
   async archiveCard(id: number) {
     try {
@@ -177,41 +177,35 @@ class CardService {
     }
   }
 
-    async moveCard(
+  async moveCard(
     id: number,
     toBoardId: number,
     toListId: number,
-    newIndex: number
+    newIndex: number,
   ) {
     try {
       const card = await cardModel.getById(id);
       if (!card) throw new NotFoundError("Card not found");
 
-      const fromList = await listModel.getListById(card.list_id);
-      if (!fromList) throw new NotFoundError("Source list not found");
+      // 1. Lấy tất cả card ở list đích và SẮP XẾP THEO POSITION
+      let targetCards = await cardModel.getCardsByListId(toListId);
 
-      const toBoard = await boardModel.getById(toBoardId);
-      if (!toBoard) throw new NotFoundError("Target board not found");
+      // Sắp xếp lại để chắc chắn (nếu repo chưa sort)
+      targetCards.sort((a, b) => a.position - b.position);
 
-      const toList = await listModel.getListById(toListId);
-      if (!toList) throw new NotFoundError("Target list not found");
+      // 2. QUAN TRỌNG: Nếu di chuyển trong cùng 1 list, phải loại bỏ chính nó ra khỏi mảng tính toán
+      targetCards = targetCards.filter((c) => c.id !== id);
 
-      if (toList.board_id !== toBoardId) {
-        throw new BadRequestError("Target list does not belong to target board");
-      }
+      // 3. Bây giờ mới tính position dựa trên danh sách "sạch"
+      const newPosition = this.computeNewPosition(targetCards, newIndex);
 
-      const targetCards = await cardModel.getCardsByListId(toListId);
-
-      if (newIndex < 0 || newIndex > targetCards.length) {
-        throw new BadRequestError("Invalid new index");
-      }
-
+      // 4. Cập nhật
       card.list_id = toListId;
-      card.list = { id: toListId } as List;
-      card.position = this.computeNewPosition(targetCards, newIndex);
+      card.position = newPosition;
 
       await cardModel.updateCard(card);
 
+      // Kiểm tra nếu khoảng cách position quá nhỏ (ví dụ < 0.001) thì mới reindex
       if (this.shouldReindex(targetCards)) {
         await this.reindexList(toListId);
       }
@@ -223,13 +217,12 @@ class CardService {
     }
   }
 
-
   async copyCard(
     id: number,
     toBoardId: number,
     toListId: number,
     newIndex: number,
-    newTitle?: string
+    newTitle?: string,
   ) {
     try {
       const sourceCard = await cardModel.getById(id);
@@ -245,7 +238,9 @@ class CardService {
       if (!toList) throw new NotFoundError("Target list not found");
 
       if (toList.board_id !== toBoardId) {
-        throw new BadRequestError("Target list does not belong to target board");
+        throw new BadRequestError(
+          "Target list does not belong to target board",
+        );
       }
 
       const targetCards = await cardModel.getCardsByListId(toListId);
@@ -259,7 +254,7 @@ class CardService {
       const created = await cardModel.createCard(
         toListId,
         newTitle ?? `${sourceCard.title} (copy)`,
-        newPosition
+        newPosition,
       );
 
       created.description = sourceCard.description;
@@ -275,7 +270,6 @@ class CardService {
       throw new InternalServerError("Failed to copy card");
     }
   }
-
 
   private computeNewPosition(sortedCards: Card[], newIndex: number): number {
     if (sortedCards.length === 0) return 100;
@@ -300,6 +294,17 @@ class CardService {
     return false;
   }
 
+  async deleteCard(id: number): Promise<void> {
+    try {
+      const card = await cardModel.getById(id);
+      if (!card) throw new NotFoundError("Card not found");
+      await cardModel.deleteCard(id);
+    } catch (error) {
+      if (error instanceof ErrorResponse) throw error;
+      throw new InternalServerError("Failed to delete card");
+    }
+  }
+
   private async reindexList(listId: number) {
     const cards = await cardModel.getCardsByListId(listId);
     for (let i = 0; i < cards.length; i++) {
@@ -311,7 +316,7 @@ class CardService {
   async setDates(
     card_id: number,
     start_date: Date | null,
-    deadline_date: Date | null
+    deadline_date: Date | null,
   ) {
     try {
       const card = await cardModel.getById(card_id);
@@ -321,6 +326,18 @@ class CardService {
     } catch (error) {
       if (error instanceof Error) throw error;
       throw new InternalServerError("Failed to set card dates");
+    }
+  }
+
+  async removeDeadline(card_id: number) {
+    try {
+      const card = await cardModel.getById(card_id);
+      if (!card) throw new NotFoundError("Card not found");
+
+      return await cardModel.removeDeadline(card_id);
+    } catch (error) {
+      if (error instanceof Error) throw error;
+      throw new InternalServerError("Failed to remove deadline");
     }
   }
 

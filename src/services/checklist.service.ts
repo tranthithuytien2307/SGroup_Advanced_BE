@@ -6,6 +6,7 @@ import {
   NotFoundError,
   ErrorResponse,
 } from "../handler/error.response";
+import { Checklist } from "../entities/checklist.entity";
 
 class ChecklistService {
   async createChecklist(card_id: number, title: string) {
@@ -23,6 +24,41 @@ class ChecklistService {
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to create checklist");
+    }
+  }
+
+  async getAllChecklists(): Promise<Checklist[]> {
+    try {
+      return await checklistModel.getAll();
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to get checklists");
+    }
+  }
+
+  async getChecklistById(checklist_id: number): Promise<Checklist> {
+    try {
+      const checklist = await checklistModel.getById(checklist_id);
+      if (!checklist) throw new NotFoundError("Checklist not found");
+      return checklist;
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to get checklist detail");
+    }
+  }
+
+  async updateChecklistTitle(
+    checklist_id: number,
+    title: string,
+  ): Promise<Checklist> {
+    try {
+      if (!title || title.trim() === "") {
+        throw new BadRequestError("Title is required");
+      }
+      return await checklistModel.updateTitle(checklist_id, title);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to update checklist title");
     }
   }
 

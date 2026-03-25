@@ -18,6 +18,7 @@ function getEnv(name: string): string {
 
 export const userProvides = {
   async encodeToken(user: UserPayload): Promise<string> {
+    console.log("Dữ liệu chuẩn bị đóng vào Token:", user);
     const secret = getEnv("JWT_SECRET");
     const expiresIn = (process.env.JWT_EXPIRES_IN ??
       "1m") as SignOptions["expiresIn"];

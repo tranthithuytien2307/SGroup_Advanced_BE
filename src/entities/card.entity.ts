@@ -60,11 +60,15 @@ export class Card {
 
   @OneToMany(() => Checklist, (checklist) => checklist.card)
   checklists!: Checklist[];
-  @Column({ nullable: true })
-  cover_color!: string;
+
+  @Column({ type: "varchar", length: 20, nullable: true })
+  cover_color!: string | null;
 
   @Column({ nullable: true })
   cover_image_url!: string;
+
+  @Column({ type: "text", nullable: true })
+  cover_url!: string | null;
 
   @OneToMany(() => CardMember, (member) => member.card)
   members!: CardMember[];

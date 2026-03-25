@@ -32,7 +32,7 @@ class ListService {
         boardId,
         name,
         coverUrl ?? null,
-        count + 1
+        count + 1,
       );
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
@@ -52,6 +52,17 @@ class ListService {
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to update list");
+    }
+  }
+
+  async deleteList(id: number) {
+    try {
+      const list = await listModel.getListById(id);
+      if (!list) throw new NotFoundError("List not found");
+      return await listModel.deleteList(list);
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to delete list");
     }
   }
 
@@ -120,16 +131,12 @@ class ListService {
         boardId,
         newName || `${sourceList.name} (copy)`,
         sourceList.cover_url,
-        count + 1
+        count + 1,
       );
 
       if (sourceList.cards?.length) {
         for (const card of sourceList.cards) {
-          await cardModel.copyCardToList(
-            card,
-            newList.id,
-            card.position
-          );
+          await cardModel.copyCardToList(card, newList.id, card.position);
         }
       }
 
@@ -169,9 +176,9 @@ class ListService {
       const list = await listModel.getListById(id);
       if (!list) throw new NotFoundError("List not found");
 
-      const lists = await this.getListsByBoard(list.board_id)
+      const lists = await this.getListsByBoard(list.board_id);
 
-      const filteredLists = lists.filter((l) => l.id !== id )
+      const filteredLists = lists.filter((l) => l.id !== id);
 
       if (newIndex < 0 || newIndex > filteredLists.length) {
         throw new BadRequestError("Invalid new index");
@@ -181,11 +188,9 @@ class ListService {
       if (filteredLists.length === 0) newPosition = 100;
       else if (newIndex === filteredLists.length) {
         newPosition = filteredLists[filteredLists.length - 1].position + 100;
-      }
-      else if (newIndex === 0) {
+      } else if (newIndex === 0) {
         newPosition = filteredLists[0].position / 2;
-      }
-      else {
+      } else {
         const prev = filteredLists[newIndex - 1];
         const next = filteredLists[newIndex];
         newPosition = (prev.position + next.position) / 2;
@@ -193,16 +198,17 @@ class ListService {
 
       list.position = newPosition;
 
-      await listModel.updateList(list)
+      await listModel.updateList(list);
 
       const needReindex = this.shouldReindex(filteredLists);
       if (needReindex) {
         await this.reindexBoard(list.board_id);
       }
-      
+
       return await this.getListsByBoard(list.board_id);
     } catch (error) {
-      if (error instanceof NotFoundError || error instanceof BadRequestError) throw error;
+      if (error instanceof NotFoundError || error instanceof BadRequestError)
+        throw error;
       throw new InternalServerError("Failed to reorder list");
     }
   }

@@ -25,17 +25,25 @@ class WorkspaceModel {
       .getMany();
   }
 
-  async getById(id: number): Promise<Workspace | null> {
-    return await this.workspaceRepository.findOne({
+  async getById(
+    id: number,
+  ): Promise<(Workspace & { countBoard: number }) | null> {
+    const workspace = await this.workspaceRepository.findOne({
       where: { id },
       relations: ["owner", "boards", "members", "members.user"],
     });
+
+    if (!workspace) return null;
+    return {
+      ...workspace,
+      countBoard: workspace.boards.length || 0,
+    };
   }
 
   async createWorkspace(
     name: string,
     description: string,
-    ownerId: number
+    ownerId: number,
   ): Promise<Workspace> {
     const workspace = this.workspaceRepository.create({
       name,
@@ -48,7 +56,7 @@ class WorkspaceModel {
   async createMember(
     workspaceId: number,
     userId: number,
-    role: "owner" | "admin" | "member" | "viewer"
+    role: "owner" | "admin" | "member" | "viewer",
   ): Promise<WorkspaceMember> {
     const member = this.memberRepository.create({
       workspace: { id: workspaceId },
@@ -60,7 +68,7 @@ class WorkspaceModel {
 
   async findMemberByUserAndWorkspace(
     workspaceId: number,
-    userId: number
+    userId: number,
   ): Promise<WorkspaceMember | null> {
     return await this.memberRepository.findOne({
       where: {

@@ -20,7 +20,7 @@ export const CardSchema = {
           z
             .string()
             .regex(/^\d+$/, "List ID must be a number")
-            .transform(Number)
+            .transform(Number),
         )
         .openapi({ description: "List ID" }),
       title: z
@@ -47,6 +47,13 @@ export const CardSchema = {
         .openapi({ description: "Due date" }),
     })
     .openapi("SetCardDatesBody"),
+  RemoveDeadline: z
+    .object({
+      card_id: z.number().int().positive().openapi({
+        description: "Card ID",
+      }),
+    })
+    .openapi("RemoveDeadlineBody"),
 
   CardIdParam: z
     .object({
@@ -83,8 +90,16 @@ export const CardSchema = {
         .string()
         .optional()
         .openapi({ description: "Card description" }),
-      cover_color: z.string().optional().nullable().openapi({ description: "Cover color (hex)" }),
-      cover_image_url: z.string().optional().nullable().openapi({ description: "Cover image URL" }),
+      cover_color: z
+        .string()
+        .optional()
+        .nullable()
+        .openapi({ description: "Cover color (hex)" }),
+      cover_image_url: z
+        .string()
+        .optional()
+        .nullable()
+        .openapi({ description: "Cover image URL" }),
     })
     .openapi("UpdateCardRequest"),
 

@@ -7,7 +7,7 @@ class CardModel {
   async createCard(
     listId: number,
     title: string,
-    position: number
+    position: number,
   ): Promise<Card> {
     const card = this.cardRepository.create({
       title,
@@ -29,7 +29,13 @@ class CardModel {
   async getCardDetails(id: number): Promise<Card | null> {
     return await this.cardRepository.findOne({
       where: { id },
-      relations: ["list", "members", "members.user", "comments", "comments.user"],
+      relations: [
+        "list",
+        "members",
+        "members.user",
+        "comments",
+        "comments.user",
+      ],
       order: {
         comments: {
           created_at: "ASC",
@@ -46,6 +52,10 @@ class CardModel {
     });
   }
 
+  async deleteCard(id: number): Promise<void> {
+    await this.cardRepository.delete({ id });
+  }
+
   async countCardsByListId(listId: number): Promise<number> {
     return await this.cardRepository.count({
       where: { list_id: listId, is_archived: false },
@@ -59,7 +69,7 @@ class CardModel {
   async copyCardToList(
     card: Card,
     toListId: number,
-    position: number
+    position: number,
   ): Promise<Card> {
     const newCard = this.cardRepository.create({
       title: card.title,
@@ -78,11 +88,22 @@ class CardModel {
   async updateDates(
     card_id: number,
     start_date: Date | null,
-    deadline_date: Date | null
+    deadline_date: Date | null,
   ): Promise<Card> {
     await this.cardRepository.update(
       { id: card_id },
-      { strat_date: start_date, deadline_date }
+      { strat_date: start_date, deadline_date },
+    );
+
+    return (await this.getById(card_id))!;
+  }
+  async removeDeadline(card_id: number): Promise<Card> {
+    await this.cardRepository.update(
+      { id: card_id },
+      {
+        deadline_date: null,
+        strat_date: null,
+      },
     );
 
     return (await this.getById(card_id))!;

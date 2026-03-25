@@ -9,6 +9,7 @@ import { authorizeBoard } from "../middleware/rbac-board.middleware";
 import { validateRequest } from "../utils/http-handler";
 import { LabelSchema } from "../schemas/label.schema";
 import { authorizeCardById } from "../middleware/rbac.card.middleware";
+import { authorizeLabelById } from "../middleware/rbac.label.middleware";
 
 const router = Router();
 export const labelRegistry = new OpenAPIRegistry();
@@ -35,7 +36,7 @@ router.post(
   authMiddleware,
   authorizeBoard(["admin", "member"]),
   validateRequest(LabelSchema.CreateLabel, "body"),
-  asyncHandler(labelController.createLabel)
+  asyncHandler(labelController.createLabel),
 );
 
 labelRegistry.registerPath({
@@ -52,7 +53,68 @@ router.get(
   authMiddleware,
   authorizeBoard(["admin", "member", "viewer"]),
   validateRequest(LabelSchema.GetById, "params"),
-  asyncHandler(labelController.getLabelByBoardId)
+  asyncHandler(labelController.getLabelByBoardId),
+);
+
+labelRegistry.registerPath({
+  method: "get",
+  path: "/api/label/card/:card_id",
+  tags: ["Label"],
+  security: [{ BearerAuth: [] }],
+  request: { params: LabelSchema.GetById },
+  responses: createApiResponse(z.null(), "Get labels by card Id"),
+});
+
+router.get(
+  "/card/:card_id",
+  authMiddleware,
+  authorizeCardById(["admin", "member", "viewer"]),
+  validateRequest(LabelSchema.GetByCardId, "params"),
+  asyncHandler(labelController.getLabelsByCardId),
+);
+
+labelRegistry.registerPath({
+  method: "put",
+  path: "/api/label",
+  tags: ["Label"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: LabelSchema.UpdateLabel,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Update label"),
+});
+
+router.put(
+  "/",
+  authMiddleware,
+  authorizeLabelById(["admin", "member"]),
+  validateRequest(LabelSchema.UpdateLabel, "body"),
+  asyncHandler(labelController.updateLabel),
+);
+
+labelRegistry.registerPath({
+  method: "delete",
+  path: "/api/label/:label_id",
+  tags: ["Label"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: LabelSchema.DeleteLabel,
+  },
+  responses: createApiResponse(z.null(), "Delete label"),
+});
+
+router.delete(
+  "/:label_id",
+  authMiddleware,
+  authorizeLabelById(["admin"]),
+  validateRequest(LabelSchema.DeleteLabel, "params"),
+  asyncHandler(labelController.deleteLabel),
 );
 
 labelRegistry.registerPath({
@@ -77,7 +139,7 @@ router.post(
   authMiddleware,
   authorizeCardById(["admin", "member"]),
   validateRequest(LabelSchema.AttachOrDetachLabelToCard, "body"),
-  asyncHandler(labelController.attachLabelsToCard)
+  asyncHandler(labelController.attachLabelsToCard),
 );
 
 labelRegistry.registerPath({
@@ -102,7 +164,7 @@ router.post(
   authMiddleware,
   authorizeCardById(["admin", "member"]),
   validateRequest(LabelSchema.AttachOrDetachLabelToCard, "body"),
-  asyncHandler(labelController.detachLabelsFromCard)
+  asyncHandler(labelController.detachLabelsFromCard),
 );
 
 export default router;

@@ -14,9 +14,55 @@ class ChecklistController {
         ResponseStatus.Sucess,
         "Checklist created successfully",
         data,
-        200
+        200,
       ),
-      res
+      res,
+    );
+  };
+
+  getAllChecklists = async (req: Request, res: Response) => {
+    const data = await checklistService.getAllChecklists();
+    return handleServiceResponse(
+      new ServiceResponse(ResponseStatus.Sucess, "All checklists", data, 200),
+      res,
+    );
+  };
+
+  getChecklistDetail = async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const data = await checklistService.getChecklistById(id);
+    return handleServiceResponse(
+      new ServiceResponse(ResponseStatus.Sucess, "Checklist detail", data, 200),
+      res,
+    );
+  };
+
+  updateChecklistTitle = async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const { title } = req.body;
+    const data = await checklistService.updateChecklistTitle(id, title);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Checklist updated",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
+  deleteChecklist = async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    await checklistService.deleteChecklist(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Checklist deleted",
+        null,
+        200,
+      ),
+      res,
     );
   };
 
@@ -30,9 +76,9 @@ class ChecklistController {
         ResponseStatus.Sucess,
         "Item added successfully",
         data,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -43,7 +89,7 @@ class ChecklistController {
 
     return handleServiceResponse(
       new ServiceResponse(ResponseStatus.Sucess, "Item updated", null, 200),
-      res
+      res,
     );
   };
 
@@ -54,7 +100,7 @@ class ChecklistController {
 
     return handleServiceResponse(
       new ServiceResponse(ResponseStatus.Sucess, "Item toggled", null, 200),
-      res
+      res,
     );
   };
 
@@ -63,7 +109,7 @@ class ChecklistController {
 
     return handleServiceResponse(
       new ServiceResponse(ResponseStatus.Sucess, "Item deleted", null, 200),
-      res
+      res,
     );
   };
 
@@ -75,9 +121,9 @@ class ChecklistController {
         ResponseStatus.Sucess,
         "Checklist progress",
         { progress },
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 }

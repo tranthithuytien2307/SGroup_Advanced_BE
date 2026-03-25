@@ -36,32 +36,72 @@ router.post(
   authMiddleware,
   authorizeCardById(["admin", "member"]),
   validateRequest(ChecklistSchema.CreateChecklist, "body"),
-  asyncHandler(checklistController.createChecklist)
+  asyncHandler(checklistController.createChecklist),
+);
+
+// OpenAPI registry cho Checklist mới
+checklistRegistry.registerPath({
+  method: "get",
+  path: "/api/checklist",
+  tags: ["Checklist"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(
+    z.array(
+      z.object({
+        id: z.number(),
+        card_id: z.number(),
+        title: z.string(),
+        items: z.array(
+          z.object({
+            id: z.number(),
+            checklist_id: z.number(),
+            content: z.string(),
+            is_completed: z.boolean(),
+          }),
+        ),
+      }),
+    ),
+    "Get all checklists",
+  ),
+});
+
+router.get(
+  "/",
+  authMiddleware,
+  asyncHandler(checklistController.getAllChecklists),
 );
 
 checklistRegistry.registerPath({
-  method: "post",
-  path: "/api/checklist/item",
+  method: "get",
+  path: "/api/checklist/{id}",
   tags: ["Checklist"],
   security: [{ BearerAuth: [] }],
   request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: ChecklistSchema.AddItem,
-        },
-      },
-    },
+    params: ChecklistSchema.GetChecklistIdParam,
   },
-  responses: createApiResponse(z.null(), "Add checklist item"),
+  responses: createApiResponse(
+    z.object({
+      id: z.number(),
+      card_id: z.number(),
+      title: z.string(),
+      items: z.array(
+        z.object({
+          id: z.number(),
+          checklist_id: z.number(),
+          content: z.string(),
+          is_completed: z.boolean(),
+        }),
+      ),
+    }),
+    "Get checklist detail",
+  ),
 });
 
-router.post(
-  "/item",
+router.get(
+  "/:id",
   authMiddleware,
-  authorizeChecklistById(["admin", "member"]),
-  validateRequest(ChecklistSchema.AddItem, "body"),
-  asyncHandler(checklistController.addItem)
+  validateRequest(ChecklistSchema.GetChecklistIdParam, "params"),
+  asyncHandler(checklistController.getChecklistDetail),
 );
 
 checklistRegistry.registerPath({
@@ -86,7 +126,89 @@ router.put(
   authMiddleware,
   authorizeChecklistItemById(["admin", "member"]),
   validateRequest(ChecklistSchema.UpdateItem, "body"),
-  asyncHandler(checklistController.updateItem)
+  asyncHandler(checklistController.updateItem),
+);
+
+checklistRegistry.registerPath({
+  method: "put",
+  path: "/api/checklist/{id}",
+  tags: ["Checklist"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: ChecklistSchema.GetChecklistIdParam,
+    body: {
+      content: {
+        "application/json": {
+          schema: ChecklistSchema.UpdateChecklistTitle,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(
+    z.object({
+      id: z.number(),
+      card_id: z.number(),
+      title: z.string(),
+      items: z.array(
+        z.object({
+          id: z.number(),
+          checklist_id: z.number(),
+          content: z.string(),
+          is_completed: z.boolean(),
+        }),
+      ),
+    }),
+    "Update checklist title",
+  ),
+});
+
+router.put(
+  "/:id",
+  authMiddleware,
+  validateRequest(ChecklistSchema.UpdateChecklistTitle, "body"),
+  asyncHandler(checklistController.updateChecklistTitle),
+);
+
+checklistRegistry.registerPath({
+  method: "delete",
+  path: "/api/checklist/{id}",
+  tags: ["Checklist"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: ChecklistSchema.GetChecklistIdParam,
+  },
+  responses: createApiResponse(z.null(), "Delete checklist"),
+});
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  asyncHandler(checklistController.deleteChecklist),
+);
+
+checklistRegistry.registerPath({
+  method: "post",
+  path: "/api/checklist/item",
+  tags: ["Checklist"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: ChecklistSchema.AddItem,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Add checklist item"),
+});
+
+router.post(
+  "/item",
+  authMiddleware,
+  authorizeChecklistById(["admin", "member"]),
+  validateRequest(ChecklistSchema.AddItem, "body"),
+  asyncHandler(checklistController.addItem),
 );
 
 checklistRegistry.registerPath({
@@ -111,7 +233,7 @@ router.patch(
   authMiddleware,
   authorizeChecklistItemById(["admin", "member"]),
   validateRequest(ChecklistSchema.ToggleItem, "body"),
-  asyncHandler(checklistController.toggleItem)
+  asyncHandler(checklistController.toggleItem),
 );
 
 checklistRegistry.registerPath({
@@ -130,7 +252,7 @@ router.delete(
   authMiddleware,
   authorizeChecklistItemById(["admin", "member"]),
   validateRequest(ChecklistSchema.ItemIdParam, "params"),
-  asyncHandler(checklistController.deleteItem)
+  asyncHandler(checklistController.deleteItem),
 );
 
 checklistRegistry.registerPath({
@@ -149,7 +271,7 @@ router.get(
   authMiddleware,
   authorizeChecklistItemById(["admin", "member", "viewer"]),
   validateRequest(ChecklistSchema.ChecklistIdParam, "params"),
-  asyncHandler(checklistController.getProgress)
+  asyncHandler(checklistController.getProgress),
 );
 
 export default router;

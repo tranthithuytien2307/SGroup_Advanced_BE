@@ -12,9 +12,9 @@ class ListController {
         ResponseStatus.Sucess,
         "Get lists successfully",
         lists,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -26,9 +26,9 @@ class ListController {
         ResponseStatus.Sucess,
         "Create list successfully",
         list,
-        201
+        201,
       ),
-      res
+      res,
     );
   }
 
@@ -41,9 +41,9 @@ class ListController {
         ResponseStatus.Sucess,
         "Update list successfully",
         list,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -55,9 +55,9 @@ class ListController {
         ResponseStatus.Sucess,
         "Archive list successfully",
         list,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -70,12 +70,28 @@ class ListController {
         ResponseStatus.Sucess,
         "Move list successfully",
         list,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
+  async deleteList(req: Request, res: Response) {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      throw new Error("Invalid List Id");
+    }
+    await listService.deleteList(id);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Delete list successfully",
+        null,
+        200,
+      ),
+      res,
+    );
+  }
 
   async copyList(req: Request, res: Response) {
     const id = parseInt(req.params.id);
@@ -88,9 +104,9 @@ class ListController {
         ResponseStatus.Sucess,
         "Copy list successfully",
         list,
-        201
+        201,
       ),
-      res
+      res,
     );
   }
 
@@ -103,9 +119,9 @@ class ListController {
         ResponseStatus.Sucess,
         "Reorder list successfully",
         lists,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 }

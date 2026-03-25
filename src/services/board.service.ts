@@ -36,7 +36,7 @@ class BoardService {
   async getBoardsByWorkspaceId(workspace_id: number): Promise<Board[]> {
     try {
       const boards = await boardModel.getBoardsByWorkspaceId(workspace_id);
-      if (!boards || boards.length === 0) {
+      if (!boards) {
         throw new NotFoundError("No boards found for this workspace", 404);
       }
       return boards;

@@ -25,18 +25,41 @@ class BoardModel {
     });
   }
 
-  async getById(id: number): Promise<Board | null> {
-    return await this.boardRepository.findOne({
+  async getById(id: number): Promise<(Board & { memberCount: number }) | null> {
+    const board = await this.boardRepository.findOne({
       where: { id },
-      relations: ["workspace", "members", "members.user","lists", "lists.cards"],
+      relations: [
+        "workspace",
+        "members",
+        "members.user",
+        "lists",
+        "lists.cards",
+      ],
     });
+    if (!board) return null;
+    return {
+      ...board,
+      memberCount: board.members?.length || 0,
+    };
   }
 
-  async getBoardsByWorkspaceId(workspace_id: number): Promise<Board[]> {
-    return await this.boardRepository.find({
-      where: { workspace_id },
-      order: { id: "ASC" },
-    });
+  async getBoardsByWorkspaceId(workspace_id: number) {
+    const result = await this.boardRepository
+      .createQueryBuilder("board")
+      .leftJoin("board.members", "member")
+      .leftJoin("board.lists", "list")
+      .where("board.workspace_id = :workspace_id", { workspace_id })
+      .addSelect("COUNT(DISTINCT member.id)", "memberCount")
+      .addSelect("COUNT(DISTINCT list.id)", "listCount")
+      .groupBy("board.id")
+      .orderBy("board.id", "ASC")
+      .getRawAndEntities();
+
+    return result.entities.map((board, index) => ({
+      ...board,
+      memberCount: Number(result.raw[index].memberCount),
+      listCount: Number(result.raw[index].listCount),
+    }));
   }
 
   async createBoard(
@@ -46,7 +69,7 @@ class BoardModel {
     cover_url?: string,
     description?: string | null,
     invite_token?: string,
-    invite_enabled?: boolean
+    invite_enabled?: boolean,
   ): Promise<Board> {
     const newBoard = this.boardRepository.create({
       name,
@@ -63,7 +86,7 @@ class BoardModel {
   async createBoardMember(
     boardId: number,
     userId: number,
-    role: BoardRole = "admin"
+    role: BoardRole = "admin",
   ): Promise<BoardMember> {
     const member = this.boardMemberRepository.create({
       board: { id: boardId } as Board,
@@ -100,7 +123,7 @@ class BoardModel {
 
   async findMemberByEmail(
     boardId: number,
-    email: string
+    email: string,
   ): Promise<BoardMember | null> {
     return await this.boardMemberRepository.findOne({
       where: {
@@ -121,7 +144,7 @@ class BoardModel {
     email: string,
     role: BoardRole,
     token: string,
-    inviterId: number
+    inviterId: number,
   ) {
     const invite = this.boardInvitationRepository.create({
       board: { id: boardId },
@@ -137,7 +160,7 @@ class BoardModel {
 
   async changeOwnerBoard(
     boardId: number,
-    newOwnerId: number
+    newOwnerId: number,
   ): Promise<BoardMember> {
     const board = await this.boardRepository.findOneBy({ id: boardId });
     if (!board) throw new Error("Board not found");
@@ -180,7 +203,7 @@ class BoardModel {
 
   async createInvitionUser(
     boardId: number,
-    userId: number
+    userId: number,
   ): Promise<BoardMember> {
     const newMember = this.boardMemberRepository.create({
       board: { id: boardId } as any,
@@ -228,7 +251,7 @@ class BoardModel {
 
   async updateInvitationStatus(
     invitation: BoardInvitation,
-    status: "pending" | "accepted" | "expired"
+    status: "pending" | "accepted" | "expired",
   ): Promise<BoardInvitation> {
     try {
       invitation.status = status;
@@ -241,7 +264,7 @@ class BoardModel {
 
   async findExistingInvitation(
     boardId: number,
-    email: string
+    email: string,
   ): Promise<BoardInvitation | null> {
     try {
       return await this.boardInvitationRepository.findOne({
@@ -256,7 +279,7 @@ class BoardModel {
   async createMember(
     board: Board,
     user: User,
-    role: "admin" | "member" | "viewer" = "member"
+    role: "admin" | "member" | "viewer" = "member",
   ): Promise<BoardMember> {
     try {
       const newMember = this.boardMemberRepository.create({
@@ -276,7 +299,7 @@ class BoardModel {
     name: string,
     workspaceId: number,
     ownerId: number,
-    visibility: "private" | "workspace" | "public"
+    visibility: "private" | "workspace" | "public",
   ): Promise<Board> {
     const repo = manager.getRepository(Board);
 
@@ -316,12 +339,11 @@ class BoardModel {
         template_id: savedTemplate.id,
         name: list.name,
         position: list.position,
-      })
+      }),
     );
 
-    const createdTemplateLists = await this.templateListRepository.save(
-      templateLists
-    );
+    const createdTemplateLists =
+      await this.templateListRepository.save(templateLists);
 
     const listMap = new Map<number, number>();
     createdTemplateLists.forEach((tplList, index) => {
@@ -341,7 +363,7 @@ class BoardModel {
               list_id: newTplListId,
               title: card.title,
               description: card.description ?? null,
-            })
+            }),
           );
         }
       }

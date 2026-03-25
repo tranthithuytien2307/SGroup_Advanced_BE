@@ -14,16 +14,16 @@ class AuthController {
 
     const { accessToken, refreshToken } = await authService.loginUser(
       email,
-      password
+      password,
     );
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Login success",
         { accessToken, refreshToken },
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -40,9 +40,9 @@ class AuthController {
         ResponseStatus.Sucess,
         "Access token refreshed successfully",
         { accessToken },
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -51,12 +51,12 @@ class AuthController {
     const user = await authService.registerUser(email, password, name);
     return handleServiceResponse(
       new ServiceResponse(ResponseStatus.Sucess, "Register success", user, 201),
-      res
+      res,
     );
   };
 
   verifyEmail = async (req: Request, res: Response) => {
-    const email = req.query.email as string;
+    const email = decodeURIComponent(req.query.email as string);
     const code = req.query.code as string;
 
     if (!email || !code) {
@@ -70,9 +70,9 @@ class AuthController {
         ResponseStatus.Sucess,
         "Email verified successfully",
         null,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -89,9 +89,9 @@ class AuthController {
         ResponseStatus.Sucess,
         "Verification code resent",
         null,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -106,9 +106,9 @@ class AuthController {
         ResponseStatus.Sucess,
         "Fetched user information",
         user,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -128,9 +128,9 @@ class AuthController {
           refreshToken: userData.refreshToken,
           user: userData.user,
         },
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 
@@ -144,9 +144,9 @@ class AuthController {
         ResponseStatus.Sucess,
         "Reset link sent successfully",
         null,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
   resetPassword = async (req: Request, res: Response) => {
@@ -160,9 +160,9 @@ class AuthController {
         ResponseStatus.Sucess,
         "Password reset successfully",
         null,
-        200
+        200,
       ),
-      res
+      res,
     );
   };
 }
