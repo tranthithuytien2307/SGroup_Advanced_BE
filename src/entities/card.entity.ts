@@ -29,7 +29,7 @@ export class Card {
   @Column()
   title!: string;
 
-  @Column({ type: "float", default: 0 })
+  @Column({ type: "decimal", precision: 10, scale: 2, default: 0 })
   position!: number;
 
   @Column({ default: false })

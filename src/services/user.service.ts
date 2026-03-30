@@ -100,34 +100,6 @@ class UserService {
     }
   }
 
-  // async uploadAvatar(userId: number, filePath: string): Promise<User> {
-  //   try {
-  //     // Validate user exists
-  //     const user = await userModel.getUserById(userId);
-  //     if (!user) {
-  //       throw new NotFoundError("User not found");
-  //     }
-
-  //     // Upload to cloudinary
-  //     const uploadResult = await cloudinary.uploader.upload(filePath, {
-  //       folder: "avatars",
-  //     });
-
-  //     // Update user avatar
-  //     const updated = await userModel.updateUserAvatar(
-  //       userId,
-  //       uploadResult.secure_url
-  //     );
-  //     if (!updated) {
-  //       throw new InternalServerError("Failed to update avatar");
-  //     }
-  //     return updated;
-  //   } catch (error) {
-  //     if (error instanceof NotFoundError) throw error;
-  //     console.error("Error in uploadAvatar:", error);
-  //     throw new InternalServerError("Failed to upload avatar");
-  //   }
-  // }
   async uploadAvatar(userId: number, avatarUrl: string): Promise<User> {
     try {
       const user = await userModel.getUserById(userId);

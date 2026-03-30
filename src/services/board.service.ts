@@ -51,7 +51,7 @@ class BoardService {
     workspace_id: number,
     created_by_id: number,
     cover_url?: string,
-    description?: string | null
+    description?: string | null,
   ): Promise<Board> {
     try {
       const board = await boardModel.createBoard(
@@ -61,7 +61,7 @@ class BoardService {
         cover_url,
         description,
         randomUUID(),
-        true
+        true,
       );
 
       await boardModel.createBoardMember(board.id, created_by_id, "admin");
@@ -78,7 +78,7 @@ class BoardService {
     cover_url?: string,
     description?: string | null,
     theme?: string | null,
-    is_archived?: boolean
+    is_archived?: boolean,
   ): Promise<Board> {
     try {
       // Validate board exists
@@ -106,7 +106,7 @@ class BoardService {
 
   async updateVisibility(
     id: number,
-    visibility: "private" | "workspace" | "public"
+    visibility: "private" | "workspace" | "public",
   ): Promise<Board> {
     try {
       const board = await boardModel.getById(id);
@@ -160,7 +160,7 @@ class BoardService {
       if (board.created_by_id === newOwnerId) {
         throw new BadRequestError(
           "New owner must be different from current owner",
-          400
+          400,
         );
       }
 
@@ -177,7 +177,7 @@ class BoardService {
   }
 
   async inviteLink(
-    id: number
+    id: number,
   ): Promise<{ inviteUrl: string; invite_enabled: boolean }> {
     try {
       const board = await boardModel.getById(id);
@@ -187,7 +187,7 @@ class BoardService {
       if (!board.invite_enabled) {
         throw new BadRequestError(
           "Invites are not enabled for this board",
-          400
+          400,
         );
       } else {
         return {
@@ -198,6 +198,22 @@ class BoardService {
     } catch (error) {
       throw new InternalServerError("Failed to get invite link");
     }
+  }
+
+  async updateBackground(
+    boardId: number,
+    backgroundData: { cover_url?: string; theme?: string },
+  ) {
+    const board = await boardModel.getById(boardId);
+    if (!board) throw new NotFoundError("Board not found");
+
+    const updated = await boardModel.updateBoardBackground(
+      boardId,
+      backgroundData,
+    );
+    if (!updated) throw new InternalServerError("Failed to update background");
+
+    return updated;
   }
 
   async regenerateInviteLink(id: number): Promise<Board> {
@@ -228,7 +244,7 @@ class BoardService {
 
   async joinViaInviteLink(
     invite_token: string,
-    userId: number
+    userId: number,
   ): Promise<BoardMember> {
     try {
       const board = await boardModel.getBoardByInviteToken(invite_token);
@@ -238,12 +254,12 @@ class BoardService {
       if (!board.invite_enabled) {
         throw new BadRequestError(
           "Invites are not enabled for this board",
-          400
+          400,
         );
       }
       const existingMember = await boardModel.isUserBoardMember(
         board.id,
-        userId
+        userId,
       );
       if (existingMember) {
         throw new BadRequestError("User must not be a board member", 400);
@@ -258,7 +274,7 @@ class BoardService {
     boardId: number,
     email: string,
     role: BoardRole,
-    inviterId: number
+    inviterId: number,
   ): Promise<BoardInvitation> {
     try {
       const board = await boardModel.getById(boardId);
@@ -278,7 +294,7 @@ class BoardService {
         email,
         role,
         token,
-        inviterId
+        inviterId,
       );
 
       await mailService.sendInvitationEmailForBoard(email, token, board.name);
@@ -310,7 +326,7 @@ class BoardService {
 
       const existingMember = await boardModel.findMemberByEmail(
         invitation.board.id,
-        invitation.email
+        invitation.email,
       );
 
       if (!existingMember) {

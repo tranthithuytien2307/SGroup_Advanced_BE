@@ -83,7 +83,7 @@ class CardService {
       return {
         cardId: cardId,
         userId: userId,
-      }
+      };
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to add member to card");
@@ -190,28 +190,21 @@ class CardService {
       const card = await cardModel.getById(id);
       if (!card) throw new NotFoundError("Card not found");
 
-      // 1. Lấy tất cả card ở list đích và SẮP XẾP THEO POSITION
-      let targetCards = await cardModel.getCardsByListId(toListId);
+      const fromListId = card.list_id;
 
-      // Sắp xếp lại để chắc chắn (nếu repo chưa sort)
-      targetCards.sort((a, b) => a.position - b.position);
-
-      // 2. QUAN TRỌNG: Nếu di chuyển trong cùng 1 list, phải loại bỏ chính nó ra khỏi mảng tính toán
-      targetCards = targetCards.filter((c) => c.id !== id);
-
-      // 3. Bây giờ mới tính position dựa trên danh sách "sạch"
-      const newPosition = this.computeNewPosition(targetCards, newIndex);
-
-      // 4. Cập nhật
       card.list_id = toListId;
-      card.position = newPosition;
-
       await cardModel.updateCard(card);
 
-      // Kiểm tra nếu khoảng cách position quá nhỏ (ví dụ < 0.001) thì mới reindex
-      if (this.shouldReindex(targetCards)) {
-        await this.reindexList(toListId);
+      console.log("AFTER UPDATE CARD:", {
+        id: card.id,
+        list_id: card.list_id,
+      });
+
+      if (fromListId !== toListId) {
+        await this.reindexList(fromListId);
       }
+
+      await this.reindexList(toListId, id, newIndex);
 
       return await cardModel.getCardsByListId(toListId);
     } catch (e) {
@@ -264,7 +257,7 @@ class CardService {
       await cardModel.updateCard(created);
 
       if (this.shouldReindex(targetCards)) {
-        await this.reindexList(toListId);
+        await this.reindexList(toListId, id, newIndex);
       }
 
       return created;
@@ -308,11 +301,28 @@ class CardService {
     }
   }
 
-  private async reindexList(listId: number) {
-    const cards = await cardModel.getCardsByListId(listId);
+  private async reindexList(
+    listId: number,
+    movedCardId?: number,
+    newIndex?: number,
+  ) {
+    let cards = await cardModel.getCardsByListId(listId);
+
+    // 🔥 FIX: reorder theo newIndex
+    if (movedCardId !== undefined && newIndex !== undefined) {
+      const oldIndex = cards.findIndex((c) => c.id === movedCardId);
+
+      if (oldIndex !== -1) {
+        const [movedCard] = cards.splice(oldIndex, 1);
+        cards.splice(newIndex, 0, movedCard);
+      }
+    }
+
+    // 🔥 sau đó mới gán lại position
     for (let i = 0; i < cards.length; i++) {
       cards[i].position = (i + 1) * 100;
     }
+
     await cardModel.bulkUpdate(cards);
   }
 

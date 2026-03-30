@@ -62,8 +62,11 @@ class CardModel {
     });
   }
 
-  async updateCard(card: Card): Promise<Card> {
-    return await this.cardRepository.save(card);
+  async updateCard(card: Card): Promise<void> {
+    await this.cardRepository.update(card.id, {
+      list_id: card.list_id,
+      position: card.position,
+    });
   }
 
   async copyCardToList(
@@ -82,7 +85,14 @@ class CardModel {
   }
 
   async bulkUpdate(cards: Card[]): Promise<void> {
-    await this.cardRepository.save(cards);
+    const promises = cards.map((card) =>
+      this.cardRepository.update(card.id, {
+        position: card.position,
+        list_id: card.list_id,
+      }),
+    );
+
+    await Promise.all(promises);
   }
 
   async updateDates(

@@ -42,6 +42,13 @@ class BoardModel {
       memberCount: board.members?.length || 0,
     };
   }
+  async updateBoardBackground(
+    boardId: number,
+    data: { cover_url?: string; theme?: string },
+  ): Promise<Board | null> {
+    await this.boardRepository.update(boardId, data);
+    return await this.getById(boardId);
+  }
 
   async getBoardsByWorkspaceId(workspace_id: number) {
     const result = await this.boardRepository

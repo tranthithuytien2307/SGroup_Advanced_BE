@@ -90,7 +90,7 @@ router.delete(
 );
 
 listRegistery.registerPath({
-  method: "put",
+  method: "patch",
   path: "/api/list/:id/move",
   tags: ["List"],
   security: [{ BearerAuth: [] }],
@@ -101,7 +101,7 @@ listRegistery.registerPath({
   responses: createApiResponse(z.null(), "Move List"),
 });
 
-router.post(
+router.patch(
   "/:id/move",
   authMiddleware,
   authorizeListById(["admin", "member"]),

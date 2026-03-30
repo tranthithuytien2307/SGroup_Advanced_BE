@@ -9,6 +9,7 @@ import { authorizeWorkspace } from "../middleware/rbac-workspace.middleware";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
+import { uploadBoardBackgroundMulter } from "../utils/cloudinary.storage";
 
 export const boardRegistry = new OpenAPIRegistry();
 const router = Router();
@@ -32,8 +33,44 @@ router.get(
   "/",
   authMiddleware,
   authorizeWorkspace(["owner", "admin", "member", "viewer"]),
-  asyncHandler(boardController.getAll)
+  asyncHandler(boardController.getAll),
 );
+
+// Route
+router.put(
+  "/:boardId/background",
+  authMiddleware,
+  uploadBoardBackgroundMulter.single("background"),
+  asyncHandler(boardController.updateBackground),
+);
+
+// Registry
+boardRegistry.registerPath({
+  method: "put",
+  path: "/api/boards/{boardId}/background",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ boardId: z.string() }),
+    body: {
+      content: {
+        "multipart/form-data": {
+          schema: z.object({
+            background: z.any().optional(), // File ảnh
+            theme: z.string().optional(), // Mã màu
+          }),
+        },
+      },
+    },
+  },
+  responses: createApiResponse(
+    z.object({
+      cover_url: z.string().nullable(),
+      theme: z.string().nullable(),
+    }),
+    "Update success",
+  ),
+});
 
 /**
  * -------------------------
@@ -56,7 +93,7 @@ router.get(
   authMiddleware,
   authorizeBoard(["admin", "member", "viewer"]),
   validateRequest(BoardSchema.GetById, "params"),
-  asyncHandler(boardController.getById)
+  asyncHandler(boardController.getById),
 );
 
 /**
@@ -83,7 +120,7 @@ router.post(
   authMiddleware,
   authorizeWorkspace(["owner", "admin", "member"]),
   validateRequest(BoardSchema.Create),
-  asyncHandler(boardController.create)
+  asyncHandler(boardController.create),
 );
 
 /**
@@ -110,7 +147,7 @@ router.put(
   authMiddleware,
   authorizeBoard(["admin", "member"]),
   validateRequest(BoardSchema.Update),
-  asyncHandler(boardController.update)
+  asyncHandler(boardController.update),
 );
 
 /**
@@ -134,7 +171,7 @@ router.delete(
   authMiddleware,
   validateRequest(BoardSchema.Delete, "params"),
   authorizeBoard(["admin"]),
-  asyncHandler(boardController.delete)
+  asyncHandler(boardController.delete),
 );
 
 /** -------------------------
@@ -157,7 +194,7 @@ router.get(
   authMiddleware,
   validateRequest(BoardSchema.GetByWorkspace, "params"),
   authorizeWorkspace(["owner", "admin", "member", "viewer"]),
-  asyncHandler(boardController.getByWorkspaceId)
+  asyncHandler(boardController.getByWorkspaceId),
 );
 
 /**
@@ -185,7 +222,7 @@ router.put(
   authMiddleware,
   validateRequest(BoardSchema.ChangeOwner),
   authorizeBoard(["admin"]),
-  asyncHandler(boardController.changeOwner)
+  asyncHandler(boardController.changeOwner),
 );
 
 /**
@@ -208,7 +245,7 @@ router.get(
   authMiddleware,
   validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin", "member"]),
-  asyncHandler(boardController.inviteLink)
+  asyncHandler(boardController.inviteLink),
 );
 
 /** -------------------------
@@ -230,7 +267,7 @@ router.post(
   authMiddleware,
   validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin"]),
-  asyncHandler(boardController.regenerateInviteLink)
+  asyncHandler(boardController.regenerateInviteLink),
 );
 
 /**
@@ -253,7 +290,7 @@ router.post(
   authMiddleware,
   validateRequest(BoardSchema.GetById, "params"),
   authorizeBoard(["admin"]),
-  asyncHandler(boardController.disableInviteLink)
+  asyncHandler(boardController.disableInviteLink),
 );
 
 /**
@@ -275,7 +312,7 @@ router.post(
   "/invite/:invite_token",
   authMiddleware,
   validateRequest(BoardSchema.JoinInvite, "params"),
-  asyncHandler(boardController.joinViaInviteLink)
+  asyncHandler(boardController.joinViaInviteLink),
 );
 
 /**
@@ -302,7 +339,7 @@ router.post(
   "/:board_id/invation-email",
   authMiddleware,
   validateRequest(BoardSchema.InviteEmail),
-  asyncHandler(boardController.inviteMember)
+  asyncHandler(boardController.inviteMember),
 );
 
 /**
@@ -321,7 +358,7 @@ boardRegistry.registerPath({
 router.get(
   "/invite-email/accept",
   authMiddleware,
-  asyncHandler(boardController.acceptInvitation)
+  asyncHandler(boardController.acceptInvitation),
 );
 
 /**
@@ -344,7 +381,7 @@ router.post(
   authMiddleware,
   authorizeBoard(["admin"]),
   validateRequest(BoardSchema.Archive, "params"),
-  asyncHandler(boardController.archive)
+  asyncHandler(boardController.archive),
 );
 
 boardRegistry.registerPath({
@@ -361,7 +398,7 @@ router.post(
   authMiddleware,
   authorizeBoard(["admin"]),
   validateRequest(BoardSchema.Unarchive, "params"),
-  asyncHandler(boardController.unarchive)
+  asyncHandler(boardController.unarchive),
 );
 
 router.put(
@@ -370,7 +407,7 @@ router.put(
   authorizeBoard(["admin"]),
   validateRequest(BoardSchema.UpdateVisibilityParams, "params"),
   validateRequest(BoardSchema.UpdateVisibilityBody, "body"),
-  asyncHandler(boardController.updateVisibility)
+  asyncHandler(boardController.updateVisibility),
 );
 
 export default router;

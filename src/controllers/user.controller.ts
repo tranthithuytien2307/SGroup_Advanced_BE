@@ -104,28 +104,6 @@ class UserController {
     );
   }
 
-  // static async uploadAvatar(req: Request, res: Response) {
-  //   const userId = (req as any).user?.id;
-  //   const filePath = req.file?.path;
-  //   if (!filePath) {
-  //     return handleServiceResponse(
-  //       new ServiceResponse(ResponseStatus.Failed, "Missing file", null, 400),
-  //       res,
-  //     );
-  //   }
-
-  //   const updatedUser = await UserService.uploadAvatar(userId, filePath);
-
-  //   return handleServiceResponse(
-  //     new ServiceResponse(
-  //       ResponseStatus.Sucess,
-  //       "Avatar updated successfully",
-  //       updatedUser,
-  //       200,
-  //     ),
-  //     res,
-  //   );
-  // }
   static async uploadAvatar(req: Request, res: Response) {
     const userId = (req as any).user?.id;
     // Với CloudinaryStorage, path chính là URL của ảnh trên Cloudinary
