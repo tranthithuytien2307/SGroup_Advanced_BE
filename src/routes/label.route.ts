@@ -51,8 +51,8 @@ labelRegistry.registerPath({
 router.get(
   "/board/:board_id",
   authMiddleware,
-  authorizeBoard(["admin", "member", "viewer"]),
   validateRequest(LabelSchema.GetById, "params"),
+  authorizeBoard(["admin", "member", "viewer"]),
   asyncHandler(labelController.getLabelByBoardId),
 );
 

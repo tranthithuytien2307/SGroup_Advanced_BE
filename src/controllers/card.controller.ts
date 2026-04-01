@@ -240,6 +240,22 @@ class CardController {
       res,
     );
   };
+
+  async getCardMembers(req: Request, res: Response) {
+    const cardId = parseInt(req.params.id);
+
+    const data = await cardService.getCardMembers(cardId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Get card members successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  }
 }
 
 export default new CardController();

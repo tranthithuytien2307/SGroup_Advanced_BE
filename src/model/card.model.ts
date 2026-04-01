@@ -62,10 +62,21 @@ class CardModel {
     });
   }
 
+  async updateMoveCard(card: Card): Promise<void> {
+    await this.cardRepository.update(card.id, {
+      list_id: card.list_id,
+      position: card.position,
+    });
+  }
+
   async updateCard(card: Card): Promise<void> {
     await this.cardRepository.update(card.id, {
       list_id: card.list_id,
       position: card.position,
+      title: card.title,
+      description: card.description,
+      cover_color: card.cover_color,
+      cover_image_url: card.cover_image_url,
     });
   }
 

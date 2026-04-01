@@ -39,6 +39,42 @@ router.post(
   asyncHandler(checklistController.createChecklist),
 );
 
+checklistRegistry.registerPath({
+  method: "get",
+  path: "/api/checklist/{cardId}/by-card",
+  tags: ["Checklist"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({
+      cardId: z.string().regex(/^\d+$/, "Card ID must be a number"),
+    }),
+  },
+  responses: createApiResponse(
+    z.array(
+      z.object({
+        id: z.number(),
+        card_id: z.number(),
+        title: z.string(),
+        items: z.array(
+          z.object({
+            id: z.number(),
+            checklist_id: z.number(),
+            content: z.string(),
+            is_completed: z.boolean(),
+          }),
+        ),
+      }),
+    ),
+    "Get checklists by card id",
+  ),
+});
+
+router.get(
+  "/:cardId/by-card",
+  authMiddleware,
+  asyncHandler(checklistController.getChecklistByCardId),
+);
+
 // OpenAPI registry cho Checklist mới
 checklistRegistry.registerPath({
   method: "get",
@@ -269,7 +305,7 @@ checklistRegistry.registerPath({
 router.get(
   "/:id/progress",
   authMiddleware,
-  authorizeChecklistItemById(["admin", "member", "viewer"]),
+  authorizeChecklistById(["admin", "member", "viewer"]),
   validateRequest(ChecklistSchema.ChecklistIdParam, "params"),
   asyncHandler(checklistController.getProgress),
 );

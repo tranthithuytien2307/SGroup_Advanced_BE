@@ -31,10 +31,10 @@ class ListModel {
     return await this.listRepository.find({
       where: { board_id: boardId, is_archived: false },
       order: {
-        position: "ASC", 
-        cards: { position: "ASC" }, 
+        position: "ASC",
+        cards: { position: "ASC" },
       },
-      relations: ["cards"],
+      relations: ["cards", "cards.checklists"],
     });
   }
 

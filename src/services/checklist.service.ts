@@ -123,6 +123,24 @@ class ChecklistService {
       throw new InternalServerError("Failed to get checklist progress");
     }
   }
+
+  async getChecklistByCardId(card_id: number): Promise<Checklist[]> {
+    try {
+      if (!card_id) {
+        throw new BadRequestError("Card id is required");
+      }
+
+      const card = await cardModel.getById(card_id);
+      if (!card) {
+        throw new NotFoundError("Card not found");
+      }
+
+      return await checklistModel.getByCardId(card_id);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to get checklists by card id");
+    }
+  }
 }
 
 export default new ChecklistService();

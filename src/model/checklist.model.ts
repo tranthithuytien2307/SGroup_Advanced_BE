@@ -103,6 +103,16 @@ class ChecklistModel {
 
     return Math.round((completed / total) * 100);
   }
+
+  async getByCardId(card_id: number): Promise<Checklist[]> {
+    return await this.checklistRepository.find({
+      where: { card_id },
+      relations: ["items"],
+      order: {
+        id: "ASC",
+      },
+    });
+  }
 }
 
 export default new ChecklistModel();

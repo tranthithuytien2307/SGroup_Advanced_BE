@@ -80,10 +80,8 @@ class CardService {
       });
       await cardMemberRepo.save(newMember);
 
-      return {
-        cardId: cardId,
-        userId: userId,
-      };
+      const updatedCard = await cardModel.getById(cardId);
+      return updatedCard?.members;
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to add member to card");
@@ -102,7 +100,9 @@ class CardService {
       }
 
       await cardMemberRepo.remove(member);
-      return await cardModel.getCardDetails(cardId);
+
+      const updatedCard = await cardModel.getById(cardId);
+      return updatedCard?.members;
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to remove member from card");
@@ -193,7 +193,7 @@ class CardService {
       const fromListId = card.list_id;
 
       card.list_id = toListId;
-      await cardModel.updateCard(card);
+      await cardModel.updateMoveCard(card);
 
       console.log("AFTER UPDATE CARD:", {
         id: card.id,
@@ -384,6 +384,19 @@ class CardService {
         card.deadline_date !== null &&
         now < card.deadline_date,
     };
+  }
+
+  async getCardMembers(cardId: number) {
+    try {
+      const card = await cardModel.getById(cardId);
+
+      if (!card) throw new NotFoundError("Card not found");
+
+      return card.members.map((m) => m.user).filter((u): u is User => !!u);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to get card members");
+    }
   }
 }
 

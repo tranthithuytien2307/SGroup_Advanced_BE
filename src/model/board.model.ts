@@ -97,8 +97,8 @@ class BoardModel {
   ): Promise<BoardMember> {
     const member = this.boardMemberRepository.create({
       board: { id: boardId } as Board,
-      user: { id: userId },
-      role,
+      user: { id: userId } as User,
+      role: "admin",
     });
     return await this.boardMemberRepository.save(member);
   }

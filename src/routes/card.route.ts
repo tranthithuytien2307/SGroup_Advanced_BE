@@ -86,6 +86,26 @@ router.patch(
 );
 
 cardRegistry.registerPath({
+  method: "get",
+  path: "/api/card/{id}/members",
+  tags: ["Card Member"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string().regex(/^\d+$/),
+    }),
+  },
+  responses: createApiResponse(z.any(), "Get card members"),
+});
+
+router.get(
+  "/:id/members",
+  authMiddleware,
+  authorizeCardById(["admin", "member", "viewer"]),
+  asyncHandler(cardController.getCardMembers),
+);
+
+cardRegistry.registerPath({
   method: "delete",
   path: "/api/card/:id",
   tags: ["Card"],
@@ -245,7 +265,11 @@ cardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Move card"),
 });
 
-router.patch("/:id/move", authMiddleware, asyncHandler(cardController.moveCard));
+router.patch(
+  "/:id/move",
+  authMiddleware,
+  asyncHandler(cardController.moveCard),
+);
 
 cardRegistry.registerPath({
   method: "post",
@@ -309,6 +333,23 @@ router.delete(
 );
 
 // --- Comments ---
+
+cardRegistry.registerPath({
+  method: "get",
+  path: "/api/card/{cardId}/comment",
+  tags: ["Card Comment"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ cardId: z.string() }),
+  },
+  responses: createApiResponse(z.any(), "Get comments by card id"),
+});
+
+router.get(
+  "/:cardId/comment",
+  authMiddleware,
+  asyncHandler(commentController.getCommentsByCardId),
+);
 
 cardRegistry.registerPath({
   method: "post",

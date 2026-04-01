@@ -37,6 +37,22 @@ class ChecklistController {
     );
   };
 
+  getChecklistByCardId = async (req: Request, res: Response) => {
+    const cardId = Number(req.params.cardId);
+
+    const data = await checklistService.getChecklistByCardId(cardId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Checklists by card id",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
   updateChecklistTitle = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const { title } = req.body;

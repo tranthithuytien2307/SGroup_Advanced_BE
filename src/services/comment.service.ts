@@ -57,6 +57,17 @@ class CommentService {
       throw new InternalServerError("Failed to delete comment");
     }
   }
+  async getCommentsByCardId(cardId: number) {
+    try {
+      const card = await cardModel.getById(cardId);
+      if (!card) throw new NotFoundError("Card not found");
+
+      return await commentModel.getByCardId(cardId);
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to get comments");
+    }
+  }
 }
 
 export default new CommentService();

@@ -9,16 +9,20 @@ class CommentController {
     const { content } = req.body;
     const userId = (req as any).user.id;
 
-    const comment = await commentService.createComment(Number(cardId), userId, content);
+    const comment = await commentService.createComment(
+      Number(cardId),
+      userId,
+      content,
+    );
 
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Create comment successfully",
         comment,
-        201
+        201,
       ),
-      res
+      res,
     );
   }
 
@@ -27,16 +31,20 @@ class CommentController {
     const { content } = req.body;
     const userId = (req as any).user.id;
 
-    const comment = await commentService.updateComment(Number(commentId), userId, content);
+    const comment = await commentService.updateComment(
+      Number(commentId),
+      userId,
+      content,
+    );
 
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Update comment successfully",
         comment,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -51,9 +59,25 @@ class CommentController {
         ResponseStatus.Sucess,
         "Delete comment successfully",
         null,
-        200
+        200,
       ),
-      res
+      res,
+    );
+  }
+
+  async getCommentsByCardId(req: Request, res: Response) {
+    const { cardId } = req.params;
+
+    const comments = await commentService.getCommentsByCardId(Number(cardId));
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Get comments by card id successfully",
+        comments,
+        200,
+      ),
+      res,
     );
   }
 }
