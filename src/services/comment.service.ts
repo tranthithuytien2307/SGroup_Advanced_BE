@@ -68,6 +68,16 @@ class CommentService {
       throw new InternalServerError("Failed to get comments");
     }
   }
+  async getCommentById(commentId: number) {
+    try {
+      const comment = await commentModel.getById(commentId);
+      if (!comment) throw new NotFoundError("Comment not found");
+      return comment;
+    } catch (e) {
+      if (e instanceof ErrorResponse) throw e;
+      throw new InternalServerError("Failed to get comment");
+    }
+  }
 }
 
 export default new CommentService();

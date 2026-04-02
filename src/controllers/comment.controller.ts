@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import commentService from "../services/comment.service";
 import { ServiceResponse, ResponseStatus } from "../provides/service.response";
 import { handleServiceResponse } from "../utils/http-handler";
+import { io } from "../index";
 
 class CommentController {
   async createComment(req: Request, res: Response) {
     const { cardId } = req.params;
-    const { content } = req.body;
+    const { content, clientId } = req.body;
     const userId = (req as any).user.id;
 
     const comment = await commentService.createComment(
@@ -14,6 +15,13 @@ class CommentController {
       userId,
       content,
     );
+
+    const payload = {
+      ...comment,
+      clientId,
+    };
+
+    io.to(`card-${cardId}`).emit("comment-created", payload);
 
     return handleServiceResponse(
       new ServiceResponse(
@@ -36,6 +44,7 @@ class CommentController {
       userId,
       content,
     );
+    io.emit("comment-updated", comment);
 
     return handleServiceResponse(
       new ServiceResponse(
@@ -51,8 +60,18 @@ class CommentController {
   async deleteComment(req: Request, res: Response) {
     const { commentId } = req.params;
     const userId = (req as any).user.id;
+    const comment = await commentService.getCommentById(Number(commentId));
 
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+    
     await commentService.deleteComment(Number(commentId), userId);
+
+    io.to(`card-${comment.card_id}`).emit("comment-deleted", {
+      commentId: Number(commentId),
+      cardId: comment.card_id,
+    });
 
     return handleServiceResponse(
       new ServiceResponse(
