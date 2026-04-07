@@ -12,11 +12,12 @@ export class WorkspaceMemberService {
     workspaceId: number,
     email: string,
     role: "admin" | "member" | "viewer",
-    inviterId: number
+    inviterId: number,
   ) {
     try {
       // Validate workspace exists
-      const workspace = await workspaceMemberModel.findWorkspaceById(workspaceId);
+      const workspace =
+        await workspaceMemberModel.findWorkspaceById(workspaceId);
       if (!workspace) {
         throw new NotFoundError("Workspace not found");
       }
@@ -24,7 +25,7 @@ export class WorkspaceMemberService {
       // Check if user is already a member
       const existingMember = await workspaceMemberModel.findMemberByEmail(
         workspaceId,
-        email
+        email,
       );
       if (existingMember) {
         throw new BadRequestError("User already a member");
@@ -33,7 +34,7 @@ export class WorkspaceMemberService {
       // Check if invitation already exists
       const existingInvite = await workspaceMemberModel.findExistingInvitation(
         workspaceId,
-        email
+        email,
       );
       if (existingInvite) {
         throw new BadRequestError("Invitation already sent");
@@ -47,7 +48,7 @@ export class WorkspaceMemberService {
         workspaceId,
         "pending",
         token,
-        inviterId
+        inviterId,
       );
 
       // Send invitation email
@@ -55,10 +56,7 @@ export class WorkspaceMemberService {
 
       return invitation;
     } catch (error) {
-      if (
-        error instanceof NotFoundError ||
-        error instanceof BadRequestError
-      ) {
+      if (error instanceof NotFoundError || error instanceof BadRequestError) {
         throw error;
       }
       console.error("Error in createInvitation:", error);
@@ -69,7 +67,8 @@ export class WorkspaceMemberService {
   async acceptInvitation(token: string) {
     try {
       // Validate invitation exists and is valid
-      const invitation = await workspaceMemberModel.findInvitationByToken(token);
+      const invitation =
+        await workspaceMemberModel.findInvitationByToken(token);
       if (!invitation) {
         throw new NotFoundError("Invalid or expired invitation");
       }
@@ -87,14 +86,14 @@ export class WorkspaceMemberService {
       // Check if already a member, if not create membership
       const existingMember = await workspaceMemberModel.findMemberByEmail(
         invitation.workspace_id,
-        invitation.email
+        invitation.email,
       );
 
       if (!existingMember) {
         await workspaceMemberModel.createMember(
           invitation.workspace,
           user,
-          "member"
+          "member",
         );
       }
 
@@ -103,10 +102,7 @@ export class WorkspaceMemberService {
 
       return user;
     } catch (error) {
-      if (
-        error instanceof NotFoundError ||
-        error instanceof BadRequestError
-      ) {
+      if (error instanceof NotFoundError || error instanceof BadRequestError) {
         throw error;
       }
       console.error("Error in acceptInvitation:", error);
@@ -117,7 +113,7 @@ export class WorkspaceMemberService {
   async updateRole(
     workspaceId: number,
     userId: number,
-    role: "owner" | "admin" | "member" | "viewer"
+    role: "owner" | "admin" | "member" | "viewer",
   ) {
     try {
       // Validate member exists
@@ -142,13 +138,15 @@ export class WorkspaceMemberService {
 
   async getMembers(workspaceId: number) {
     try {
-      const members = await workspaceMemberModel.getMembersByWorkspace(workspaceId);
+      const members =
+        await workspaceMemberModel.getMembersByWorkspace(workspaceId);
 
       // Format response
       return members.map((m) => ({
         id: m.user.id,
         name: m.user.name,
         email: m.user.email,
+        avatar_url: m.user.avatar_url,
         role: m.role,
       }));
     } catch (error) {

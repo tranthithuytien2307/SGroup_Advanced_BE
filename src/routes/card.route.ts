@@ -1,0 +1,419 @@
+import { Router } from "express";
+import cardController from "../controllers/card.controller";
+import commentController from "../controllers/comment.controller";
+import { authMiddleware } from "../middleware/auth.middleware";
+import { asyncHandler } from "../middleware/asyncHandler";
+import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
+import z from "zod";
+import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
+import { CardSchema } from "../schemas/card.schema";
+import { authorizeCardById } from "../middleware/rbac.card.middleware";
+import { validateRequest } from "../utils/http-handler";
+import { CommentSchema } from "../schemas/comment.schema";
+
+const router = Router();
+export const cardRegistry = new OpenAPIRegistry();
+
+router.use(authMiddleware);
+
+cardRegistry.registerPath({
+  method: "post",
+  path: "/api/card",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.Create,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Create card"),
+});
+
+router.post("/", authMiddleware, asyncHandler(cardController.createCard));
+
+cardRegistry.registerPath({
+  method: "patch",
+  path: "/api/card/date",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.SetDates,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Set card dates"),
+});
+
+router.patch(
+  "/date",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  validateRequest(CardSchema.SetDates, "body"),
+  asyncHandler(cardController.setDates),
+);
+
+cardRegistry.registerPath({
+  method: "patch",
+  path: "/api/card/remove-deadline",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.RemoveDeadline,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Remove deadline"),
+});
+
+router.patch(
+  "/remove-deadline",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  validateRequest(CardSchema.RemoveDeadline, "body"),
+  asyncHandler(cardController.removeDeadline),
+);
+
+cardRegistry.registerPath({
+  method: "get",
+  path: "/api/card/{id}/members",
+  tags: ["Card Member"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string().regex(/^\d+$/),
+    }),
+  },
+  responses: createApiResponse(z.any(), "Get card members"),
+});
+
+router.get(
+  "/:id/members",
+  authMiddleware,
+  authorizeCardById(["admin", "member", "viewer"]),
+  asyncHandler(cardController.getCardMembers),
+);
+
+cardRegistry.registerPath({
+  method: "delete",
+  path: "/api/card/:id",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: createApiResponse(z.null(), "Delete card"),
+});
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  asyncHandler(cardController.deleteCard),
+);
+
+cardRegistry.registerPath({
+  method: "put",
+  path: "/api/card/:id",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.Update,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Update card"),
+});
+
+router.put("/:id", authMiddleware, asyncHandler(cardController.updateCard));
+
+cardRegistry.registerPath({
+  method: "patch",
+  path: "/api/card/:id/archive",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: createApiResponse(z.null(), "Archive card"),
+});
+
+router.patch(
+  "/:id/archive",
+  authMiddleware,
+  asyncHandler(cardController.archiveCard),
+);
+
+cardRegistry.registerPath({
+  method: "patch",
+  path: "/api/card/:id/unarchive",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: createApiResponse(z.null(), "Unarchive card"),
+});
+
+router.patch(
+  "/:id/unarchive",
+  authMiddleware,
+  asyncHandler(cardController.unarchiveCard),
+);
+
+cardRegistry.registerPath({
+  method: "post",
+  path: "/api/card/complete",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.CompleteCard,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Mark card as completed"),
+});
+
+router.post(
+  "/complete",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  asyncHandler(cardController.markCompleted),
+);
+
+cardRegistry.registerPath({
+  method: "get",
+  path: "/api/card/{card_id}/status",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: CardSchema.CardIdParam,
+  },
+  responses: createApiResponse(
+    CardSchema.CardDateStatusResponse,
+    "Get card date status",
+  ),
+});
+
+router.get(
+  "/:card_id/status",
+  authMiddleware,
+  authorizeCardById(["admin", "member", "viewer"]),
+  validateRequest(CardSchema.CardIdParam, "params"),
+  asyncHandler(cardController.getStatus),
+);
+
+cardRegistry.registerPath({
+  method: "post",
+  path: "/api/card/:id/reorder",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.Reorder,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Reorder card"),
+});
+
+router.post(
+  "/:id/reorder",
+  authMiddleware,
+  asyncHandler(cardController.reorderCard),
+);
+
+cardRegistry.registerPath({
+  method: "post",
+  path: "/api/card/:id/move",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.Move,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Move card"),
+});
+
+router.patch(
+  "/:id/move",
+  authMiddleware,
+  asyncHandler(cardController.moveCard),
+);
+
+cardRegistry.registerPath({
+  method: "post",
+  path: "/api/card/:id/copy",
+  tags: ["Card"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.Copy,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Copy card"),
+});
+
+router.post("/:id/copy", authMiddleware, asyncHandler(cardController.copyCard));
+
+cardRegistry.registerPath({
+  method: "post",
+  path: "/api/card/{id}/member",
+  tags: ["Card Member"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CardSchema.AddMember,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Add member to card"),
+});
+
+router.post(
+  "/:id/member",
+  authMiddleware,
+  asyncHandler(cardController.addMember),
+);
+
+cardRegistry.registerPath({
+  method: "delete",
+  path: "/api/card/{id}/member/{userId}",
+  tags: ["Card Member"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ id: z.string(), userId: z.string() }),
+  },
+  responses: createApiResponse(z.null(), "Remove member from card"),
+});
+
+router.delete(
+  "/:id/member/:userId",
+  authMiddleware,
+  asyncHandler(cardController.removeMember),
+);
+
+// --- Comments ---
+
+cardRegistry.registerPath({
+  method: "get",
+  path: "/api/card/{cardId}/comment",
+  tags: ["Card Comment"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ cardId: z.string() }),
+  },
+  responses: createApiResponse(z.any(), "Get comments by card id"),
+});
+
+router.get(
+  "/:cardId/comment",
+  authMiddleware,
+  asyncHandler(commentController.getCommentsByCardId),
+);
+
+cardRegistry.registerPath({
+  method: "post",
+  path: "/api/card/{cardId}/comment",
+  tags: ["Card Comment"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ cardId: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CommentSchema.Create,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Create comment"),
+});
+
+router.post(
+  "/:cardId/comment",
+  authMiddleware,
+  asyncHandler(commentController.createComment),
+);
+
+cardRegistry.registerPath({
+  method: "put",
+  path: "/api/card/comment/{commentId}",
+  tags: ["Card Comment"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ commentId: z.string() }),
+    body: {
+      content: {
+        "application/json": {
+          schema: CommentSchema.Update,
+        },
+      },
+    },
+  },
+  responses: createApiResponse(z.null(), "Update comment"),
+});
+
+router.put(
+  "/comment/:commentId",
+  authMiddleware,
+  asyncHandler(commentController.updateComment),
+);
+
+cardRegistry.registerPath({
+  method: "delete",
+  path: "/api/card/comment/{commentId}",
+  tags: ["Card Comment"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ commentId: z.string() }),
+  },
+  responses: createApiResponse(z.null(), "Delete comment"),
+});
+
+router.delete(
+  "/comment/:commentId",
+  authMiddleware,
+  asyncHandler(commentController.deleteComment),
+);
+
+export default router;

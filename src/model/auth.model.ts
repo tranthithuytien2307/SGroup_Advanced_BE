@@ -16,7 +16,7 @@ class AuthModel {
           "name",
           "isVerified",
           "verifyToken",
-          "roleId",
+          "role_id",
           "refreshToken",
         ],
       });
@@ -31,7 +31,7 @@ class AuthModel {
   async createUser(
     email: string,
     hashedPassword: string,
-    user: string
+    user: string,
   ): Promise<User> {
     try {
       const userRepository = AppDataSource.getRepository(User);
@@ -42,7 +42,7 @@ class AuthModel {
       newUser.name = user;
       newUser.isVerified = false;
       newUser.verifyToken = crypto.randomBytes(32).toString("hex");
-      newUser.roleId = 3;
+      newUser.role_id = 3;
 
       return await userRepository.save(newUser);
     } catch (error) {
@@ -56,7 +56,7 @@ class AuthModel {
     name: string,
     provider: string,
     provider_id: string,
-    avatar_url?: string
+    avatar_url?: string,
   ): Promise<User> {
     try {
       const userRepository = AppDataSource.getRepository(User);
@@ -70,7 +70,6 @@ class AuthModel {
       newUser.provider = provider;
       newUser.provider_id = provider_id;
       newUser.avatar_url = avatar_url || null;
-      newUser.roleId = 3;
 
       return await userRepository.save(newUser);
     } catch (error) {
@@ -81,7 +80,7 @@ class AuthModel {
 
   async updateRefreshToken(
     userId: number,
-    refreshToken: string
+    refreshToken: string,
   ): Promise<void> {
     try {
       const userRepository = AppDataSource.getRepository(User);
@@ -107,7 +106,7 @@ class AuthModel {
       const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({
         where: { id: userId },
-        select: ["id", "email", "name", "roleId", "isVerified", "avatar_url"],
+        select: ["id", "email", "name", "role", "isVerified", "avatar_url"],
       });
       return user;
     } catch (err) {
@@ -115,9 +114,10 @@ class AuthModel {
       throw new Error("Failed to get user by ID");
     }
   }
+
   async updatePasswordByEmail(
     email: string,
-    hashedPassword: string
+    hashedPassword: string,
   ): Promise<void> {
     try {
       const userRepository = AppDataSource.getRepository(User);

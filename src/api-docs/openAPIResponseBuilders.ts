@@ -1,37 +1,20 @@
-export const userResponses = {
-  "200": {
-    description: "List of users",
-    content: {
-      "application/json": {
-        schema: {
-          type: "array",
-          items: { $ref: "#/components/schemas/User" },
-        },
-      },
-    },
-  },
-  "201": {
-    description: "User created successfully",
-    content: {
-      "application/json": {
-        schema: { $ref: "#/components/schemas/User" },
-      },
-    },
-  },
-};
+import { StatusCodes } from "http-status-codes";
+import { z } from "zod";
+import { ServiceResponseSchema } from "../provides/service.response";
 
-export const healthResponses = {
-  "200": {
-    description: "OK",
-    content: {
-      "application/json": {
-        schema: {
-          type: "object",
-          properties: {
-            status: { type: "string", example: "ok" },
-          },
+export function createApiResponse(
+  schema: z.ZodTypeAny,
+  description: string,
+  statusCode = StatusCodes.OK
+) {
+  return {
+    [statusCode]: {
+      description,
+      content: {
+        "application/json": {
+          schema: ServiceResponseSchema(schema),
         },
       },
     },
-  },
-};
+  };
+}

@@ -1,11 +1,6 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/user.entity";
 
-/**
- * UserModel - Pure Data Access Layer
- * Only handles database operations, returns data or null
- * No business logic, no validation, no error throwing
- */
 class UserModel {
   private userRepository = AppDataSource.getRepository(User);
 
@@ -14,18 +9,23 @@ class UserModel {
   }
 
   async getUserById(userId: number): Promise<User | null> {
-    return await this.userRepository.findOne({
-      where: { id: userId },
-      select: [
-        "id",
-        "name",
-        "email",
-        "roleId",
-        "isVerified",
-        "avatar_url",
-        "provider",
-      ],
-    });
+    try {
+      return await this.userRepository.findOne({
+        where: { id: userId },
+        select: [
+          "id",
+          "name",
+          "email",
+          "role_id",
+          "isVerified",
+          "avatar_url",
+          "provider",
+        ],
+      });
+    } catch (error) {
+      console.error("Error in getUserById:", error);
+      throw new Error("Failed to get user by ID");
+    }
   }
 
   async createUser(data: Partial<User>): Promise<User> {

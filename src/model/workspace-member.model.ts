@@ -4,11 +4,6 @@ import { User } from "../entities/user.entity";
 import { WorkspaceMember } from "../entities/workspace-member.entity";
 import { WorkspaceInvitation } from "../entities/workspace-invitations.entity";
 
-/**
- * WorkspaceMemberModel - Pure Data Access Layer
- * Only handles database operations, returns data or null
- * No business logic, no validation, no error throwing
- */
 class WorkspaceMemberModel {
   private workspaceRepo = AppDataSource.getRepository(Workspace);
   private userRepo = AppDataSource.getRepository(User);
@@ -25,6 +20,19 @@ class WorkspaceMemberModel {
 
   async findUserById(id: number): Promise<User | null> {
     return await this.userRepo.findOne({ where: { id } });
+  }
+
+  async isUserMember(
+    workspaceId: number,
+    userId: number
+  ): Promise<boolean> {
+    const member = await this.memberRepo.findOne({
+      where: {
+        workspace: { id: workspaceId },
+        user: { id: userId },
+      },
+    });
+    return !!member;
   }
 
   async findMember(

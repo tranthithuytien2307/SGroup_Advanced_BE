@@ -1,14 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../data-source";
 import { WorkspaceMember } from "../entities/workspace-member.entity";
-import { AuthFailureError, ForbiddenError, InternalServerError } from "../handler/error.response";
+import {
+  AuthFailureError,
+  ForbiddenError,
+  InternalServerError,
+} from "../handler/error.response";
 
-/** 
+/**
  * This middleware uses RBAC to authorize user actions on workspaces.
  * It checks if the user has the required role in the specified workspace.
  */
 
-export const authorizeWorkspace = (requiredRoles: ("owner" | "admin" | "member" | "viewer")[]) => {
+export const authorizeWorkspace = (
+  requiredRoles: ("owner" | "admin" | "member" | "viewer")[]
+) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const user = (req as any).user;
@@ -22,6 +28,7 @@ export const authorizeWorkspace = (requiredRoles: ("owner" | "admin" | "member" 
       // - body
       const workspaceId =
         req.params.workspace_id ||
+        req.params.id ||
         req.query.workspace_id ||
         req.body.workspace_id;
 
@@ -46,7 +53,9 @@ export const authorizeWorkspace = (requiredRoles: ("owner" | "admin" | "member" 
       // Check role
       if (!requiredRoles.includes(membership.role)) {
         throw new ForbiddenError(
-          `Workspace permission denied: require [${requiredRoles.join(", ")}], but you are "${membership.role}"`
+          `Workspace permission denied: require [${requiredRoles.join(
+            ", "
+          )}], but you are "${membership.role}"`
         );
       }
 
@@ -61,7 +70,9 @@ export const authorizeWorkspace = (requiredRoles: ("owner" | "admin" | "member" 
         throw error;
       }
 
-      throw new InternalServerError("Internal error during workspace authorization");
+      throw new InternalServerError(
+        "Internal error during workspace authorization"
+      );
     }
   };
 };

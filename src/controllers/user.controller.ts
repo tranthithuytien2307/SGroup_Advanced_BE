@@ -12,9 +12,9 @@ class UserController {
         ResponseStatus.Sucess,
         "Users fetched successfully",
         users,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -32,9 +32,9 @@ class UserController {
         ResponseStatus.Sucess,
         "User fetched successfully",
         user,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -45,14 +45,14 @@ class UserController {
         ResponseStatus.Sucess,
         "User created successfully",
         user,
-        201
+        201,
       ),
-      res
+      res,
     );
   }
 
   static async updateUser(req: Request, res: Response) {
-    const id = parseInt(req.params.id, 10);
+    const id = (req as any).user?.id;
     if (Number.isNaN(id)) {
       throw new BadRequestError("Invalid user id");
     }
@@ -65,9 +65,9 @@ class UserController {
         ResponseStatus.Sucess,
         "User updated successfully",
         user,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -82,9 +82,9 @@ class UserController {
         ResponseStatus.Sucess,
         "User deleted successfully",
         null,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
@@ -98,32 +98,31 @@ class UserController {
         ResponseStatus.Sucess,
         "Profile updated successfully",
         updatedUser,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 
   static async uploadAvatar(req: Request, res: Response) {
     const userId = (req as any).user?.id;
-    const filePath = req.file?.path;
-    if (!filePath) {
-      return handleServiceResponse(
-        new ServiceResponse(ResponseStatus.Failed, "Missing file", null, 400),
-        res
-      );
+    // Với CloudinaryStorage, path chính là URL của ảnh trên Cloudinary
+    const avatarUrl = req.file?.path;
+
+    if (!avatarUrl) {
+      throw new BadRequestError("No file uploaded");
     }
 
-    const updatedUser = await UserService.uploadAvatar(userId, filePath);
+    const updatedUser = await UserService.uploadAvatar(userId, avatarUrl);
 
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
-        "Avatar updated successfully",
+        "Avatar updated",
         updatedUser,
-        200
+        200,
       ),
-      res
+      res,
     );
   }
 }

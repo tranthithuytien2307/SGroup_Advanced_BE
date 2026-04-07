@@ -22,7 +22,7 @@ const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!;
 class AuthService {
   async loginUser(
     email: string,
-    password: string
+    password: string,
   ): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -44,14 +44,16 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        roleId: user.roleId,
         email: user.email,
+        role_id: user.role_id,
+        role: user.role,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
-        roleId: user.roleId,
         email: user.email,
+        role_id: user.role_id,
+        role: user.role,
       });
 
       user.refreshToken = refreshToken;
@@ -77,7 +79,7 @@ class AuthService {
           redirect_uri: REDIRECT_URI,
           grant_type: "authorization_code",
         }),
-        { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+        { headers: { "Content-Type": "application/x-www-form-urlencoded" } },
       );
       const { access_token, id_token } = tokenResponse.data;
 
@@ -86,7 +88,7 @@ class AuthService {
       }
 
       const userInfoResponse = await axios.get(
-        `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${access_token}`
+        `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${access_token}`,
       );
 
       const {
@@ -104,7 +106,7 @@ class AuthService {
           name,
           "google",
           provider_id,
-          avatar_url
+          avatar_url,
         );
       } else {
         console.log("[GoogleLogin] User found:", user.id);
@@ -112,14 +114,16 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        roleId: user.roleId,
         email: user.email,
+        role_id: user.role_id,
+        role: user.role,
       });
 
       const refreshToken = await userProvides.encodeRefreshToken({
         id: user.id,
-        roleId: user.roleId,
         email: user.email,
+        role_id: user.role_id,
+        role: user.role,
       });
 
       await authModel.updateRefreshToken(user.id, refreshToken);
@@ -136,11 +140,11 @@ class AuthService {
   async registerUser(
     email: string,
     password: string,
-    name: string
+    name: string,
   ): Promise<string> {
     try {
       const existingUser = (await authModel.getUserByEmail(
-        email
+        email,
       )) as User | null;
       if (existingUser) {
         throw new ErrorResponse("User already exists", 409);
@@ -167,19 +171,26 @@ class AuthService {
   async verifyEmail(email: string, code: string): Promise<void> {
     try {
       const savedCode = await redisClient.get(`verify:${email}`);
+      console.log("1");
+      console.log("savedCode =", savedCode);
+      console.log("input code =", code);
+      console.log("redis key =", `verify:${email}`);
       if (!savedCode) {
         throw new Error("Verification code expired or not found");
       }
       if (savedCode !== code) {
         throw new Error("Invalid verification code");
       }
+      console.log("2");
 
       const user = await authModel.getUserByEmail(email);
       if (!user) {
         throw new Error("User not found");
       }
+      console.log("3");
       user.isVerified = true;
       await AppDataSource.getRepository(User).save(user);
+      console.log("4");
 
       await redisClient.del(`verify:${email}`);
     } catch (error) {
@@ -191,7 +202,7 @@ class AuthService {
   }
 
   async refreshAccessToken(
-    refreshToken: string
+    refreshToken: string,
   ): Promise<{ accessToken: string }> {
     try {
       if (!refreshToken) {
@@ -207,8 +218,9 @@ class AuthService {
 
       const accessToken = await userProvides.encodeToken({
         id: user.id,
-        roleId: user.roleId,
         email: user.email,
+        role_id: user.role_id,
+        role: user.role,
       });
 
       return { accessToken };
@@ -254,11 +266,10 @@ class AuthService {
       const user = await authModel.getUserByEmail(email);
       if (!user) throw new BadRequestError("User not found");
 
-      const resetToken = crypto.randomBytes(20).toString("hex");
+      const resetToken = crypto.randomBytes(3).toString("hex");
       await redisClient.setEx(`reset:${email}`, 900, resetToken);
 
-      const resetLink = `${process.env.BASE_URL}/api/auth/reset-password?email=${email}&token=${resetToken}`;
-      await mailService.sendEmail(email, resetLink);
+      await mailService.sendEmail(email, resetToken);
     } catch (error) {
       if (error instanceof ErrorResponse) {
         throw error;
@@ -266,20 +277,25 @@ class AuthService {
       throw new InternalServerError("Failed to send reset email");
     }
   }
-  async resetPassword(email: string, token: string, newPassword: string): Promise<void>{
-    try{
+  async resetPassword(
+    email: string,
+    token: string,
+    newPassword: string,
+  ): Promise<void> {
+    try {
       const savedToken = await redisClient.get(`reset:${email}`);
-      if (!savedToken || savedToken !== token) throw new BadRequestError("Invalid or expired token");
+      if (!savedToken || savedToken !== token)
+        throw new BadRequestError("Invalid or expired token");
 
       const { hashString } = await hashProvides.generateHash(newPassword);
       await authModel.updatePasswordByEmail(email, hashString);
 
       await redisClient.del(`reset:${email}`);
-    } catch( error ){
-      if (error instanceof ErrorResponse){
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
         throw error;
       }
-       throw new InternalServerError("Failed to reset password");
+      throw new InternalServerError("Failed to reset password");
     }
   }
 }

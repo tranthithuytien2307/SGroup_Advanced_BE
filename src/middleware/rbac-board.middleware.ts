@@ -7,13 +7,13 @@ import {
   InternalServerError,
 } from "../handler/error.response";
 
-/** 
+/**
  * This middleware uses RBAC to authorize user actions on boards.
  * It checks if the user has the required role in the specified board.
  */
 
 export const authorizeBoard = (
-  requiredRoles: ("admin" | "member" | "viewer")[]
+  requiredRoles: ("admin" | "member" | "viewer")[],
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -26,10 +26,14 @@ export const authorizeBoard = (
       // - params
       // - query
       // - body
-      const boardId =
+      const rawBoardId =
         req.params.board_id ||
+        req.params.id ||
         req.query.board_id ||
         req.body.board_id;
+
+      const boardId = Number(rawBoardId);
+      console.log("BoardId:", boardId);
 
       if (!boardId) {
         throw new ForbiddenError("Missing board_id in request");
@@ -52,7 +56,7 @@ export const authorizeBoard = (
       // Check role
       if (!requiredRoles.includes(membership.role)) {
         throw new ForbiddenError(
-          `Board permission denied: require [${requiredRoles.join(", ")}], but you are "${membership.role}"`
+          `Board permission denied: require [${requiredRoles.join(", ")}], but you are "${membership.role}"`,
         );
       }
 
@@ -68,7 +72,7 @@ export const authorizeBoard = (
       }
 
       throw new InternalServerError(
-        "Internal Server Error during board authorization"
+        "Internal Server Error during board authorization",
       );
     }
   };

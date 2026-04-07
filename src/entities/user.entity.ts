@@ -3,16 +3,19 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Workspace } from "./workspace.entity";
 import { WorkspaceMember } from "./workspace-member.entity";
 import { Board } from "./board.entity";
 import { WorkspaceInvitation } from "./workspace-invitations.entity";
 import { Role } from "./role.entity";
+import { TemplateBoard } from "./template-board.entity";
+
+import { CardMember } from "./card-member.entity";
 
 @Entity("users")
 export class User {
@@ -29,11 +32,11 @@ export class User {
   password!: string | null; // OAuth user can have null password
 
   @ManyToOne(() => Role)
-  @JoinColumn({ name: "roleId" })
+  @JoinColumn({ name: "role_id" })
   role!: Role;
 
-  @Column({ type: "int" })
-  roleId!: number;
+  @Column()
+  role_id!: number;
 
   @Column({ default: false })
   isVerified!: boolean;
@@ -70,6 +73,9 @@ export class User {
   @OneToMany(() => Board, (board) => board.created_by)
   createdBoards!: Board[];
 
+  @OneToMany(() => CardMember, (member) => member.user)
+  cardMemberships!: CardMember[];
+
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;
 
@@ -78,4 +84,7 @@ export class User {
 
   @OneToMany(() => WorkspaceInvitation, (inv) => inv.invited_by)
   sentInvitations!: WorkspaceInvitation[];
+
+  @OneToMany(() => TemplateBoard, (t) => t.owner)
+  templates!: TemplateBoard[];
 }
