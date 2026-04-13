@@ -31,6 +31,9 @@ export class User {
   @Column({ type: "varchar", nullable: true })
   password!: string | null; // OAuth user can have null password
 
+  @Column({ type: "text", nullable: true })
+  bio!: string | null;
+
   @ManyToOne(() => Role)
   @JoinColumn({ name: "role_id" })
   role!: Role;

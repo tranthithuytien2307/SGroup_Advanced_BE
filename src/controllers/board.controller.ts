@@ -22,6 +22,26 @@ class BoardController {
     );
   };
 
+  getCreatedBy = async (req: Request, res: Response) => {
+    const boardId = parseInt(req.params.board_id, 10);
+
+    if (Number.isNaN(boardId)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+
+    const data = await boardService.getCreatedBy(boardId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Get creator successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
   getById = async (req: Request, res: Response) => {
     const id = parseInt(req.params.board_id, 10);
     if (Number.isNaN(id)) {
@@ -154,6 +174,26 @@ class BoardController {
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Board unarchived successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
+  getArchived = async (req: Request, res: Response) => {
+    const boardId = parseInt(req.params.board_id, 10);
+
+    if (Number.isNaN(boardId)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+
+    const data = await boardService.getArchived(boardId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Get archived items successfully",
         data,
         200,
       ),
@@ -365,6 +405,26 @@ class BoardController {
         ResponseStatus.Sucess,
         "Invitation accepted",
         result,
+        200,
+      ),
+      res,
+    );
+  };
+
+  getMyBoards = async (req: Request, res: Response) => {
+    const userId = (req as any).user.id;
+
+    if (!userId) {
+      throw new BadRequestError("User not authenticated");
+    }
+
+    const data = await boardService.getBoardsByUserId(userId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Boards retrieved successfully",
+        data,
         200,
       ),
       res,

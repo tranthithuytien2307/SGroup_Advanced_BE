@@ -308,7 +308,6 @@ class CardService {
   ) {
     let cards = await cardModel.getCardsByListId(listId);
 
-    // 🔥 FIX: reorder theo newIndex
     if (movedCardId !== undefined && newIndex !== undefined) {
       const oldIndex = cards.findIndex((c) => c.id === movedCardId);
 
@@ -318,7 +317,6 @@ class CardService {
       }
     }
 
-    // 🔥 sau đó mới gán lại position
     for (let i = 0; i < cards.length; i++) {
       cards[i].position = (i + 1) * 100;
     }

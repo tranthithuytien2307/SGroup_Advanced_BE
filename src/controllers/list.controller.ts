@@ -61,6 +61,22 @@ class ListController {
     );
   }
 
+  unarchiveList = async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+
+    const list = await listService.unarchiveList(id);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Unarchive list successfully",
+        list,
+        200,
+      ),
+      res,
+    );
+  };
+
   async moveList(req: Request, res: Response) {
     const id = parseInt(req.params.id);
     const { newBoardId, newIndex } = req.body;

@@ -20,6 +20,7 @@ class UserModel {
           "isVerified",
           "avatar_url",
           "provider",
+          "bio",
         ],
       });
     } catch (error) {
@@ -33,17 +34,32 @@ class UserModel {
     return await this.userRepository.save(newUser);
   }
 
+  // async updateUserProfile(
+  //   userId: number,
+  //   data: Partial<User>,
+  // ): Promise<User | null> {
+  //   await this.userRepository.update({ id: userId }, data);
+  //   return await this.getUserById(userId);
+  // }
   async updateUserProfile(
     userId: number,
-    data: Partial<User>
+    data: Partial<User>,
   ): Promise<User | null> {
-    await this.userRepository.update({ id: userId }, data);
-    return await this.getUserById(userId);
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) return null;
+
+    // merge data
+    Object.assign(user, data);
+
+    return await this.userRepository.save(user); 
   }
 
   async updateUserAvatar(
     userId: number,
-    avatarUrl: string
+    avatarUrl: string,
   ): Promise<User | null> {
     await this.userRepository.update(userId, { avatar_url: avatarUrl });
     return await this.getUserById(userId);

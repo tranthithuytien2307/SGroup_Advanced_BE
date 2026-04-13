@@ -79,6 +79,21 @@ class ListService {
     }
   }
 
+  async unarchiveList(id: number) {
+    try {
+      const list = await listModel.getListById(id);
+      if (!list) throw new NotFoundError("List not found");
+
+      list.is_archived = false;
+      list.archived_at = null;
+
+      return await listModel.updateList(list);
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to unarchive list");
+    }
+  }
+
   async moveList(id: number, newBoardId: number, newIndex: number) {
     try {
       const list = await listModel.getListById(id);
@@ -119,7 +134,7 @@ class ListService {
 
   async copyList(id: number, newName?: string): Promise<List> {
     try {
-      const sourceList = await listModel.getListById(id);
+      const sourceList = await listModel.getListByIdWithRelations(id);
       if (!sourceList) {
         throw new NotFoundError("Source list not found", 404);
       }

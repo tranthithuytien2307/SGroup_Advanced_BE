@@ -18,6 +18,7 @@ class AuthModel {
           "verifyToken",
           "role_id",
           "refreshToken",
+          "bio",
         ],
       });
 
@@ -106,7 +107,15 @@ class AuthModel {
       const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({
         where: { id: userId },
-        select: ["id", "email", "name", "role", "isVerified", "avatar_url"],
+        select: [
+          "id",
+          "email",
+          "name",
+          "role",
+          "isVerified",
+          "avatar_url",
+          "bio",
+        ],
       });
       return user;
     } catch (err) {

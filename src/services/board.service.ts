@@ -10,6 +10,8 @@ import {
 import { BoardInvitation } from "../entities/board_invitations.entity";
 import { BoardMember, BoardRole } from "../entities/board-member.entity";
 import { InternalServerError, ErrorResponse } from "../handler/error.response";
+import { List } from "../entities/list.entity";
+import { Card } from "../entities/card.entity";
 
 class BoardService {
   async getAll(): Promise<Board[]> {
@@ -30,6 +32,21 @@ class BoardService {
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to fetch board");
+    }
+  }
+
+  async getCreatedBy(boardId: number) {
+    try {
+      const user = await boardModel.getCreatedBy(boardId);
+
+      if (!user) {
+        throw new NotFoundError("Creator not found");
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to fetch creator");
     }
   }
 
@@ -123,6 +140,24 @@ class BoardService {
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to update board visibility");
+    }
+  }
+
+  async getArchived(boardId: number): Promise<{
+    lists: List[];
+    cards: Card[];
+  }> {
+    try {
+      const board = await boardModel.getById(boardId);
+
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      return await boardModel.getArchived(boardId);
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to get archived items");
     }
   }
 
@@ -378,6 +413,21 @@ class BoardService {
     } catch (error) {
       if (error instanceof NotFoundError) throw error;
       throw new InternalServerError("Failed to unarchive board");
+    }
+  }
+
+  async getBoardsByUserId(userId: number): Promise<Board[]> {
+    try {
+      const boards = await boardModel.getBoardsByUserId(userId);
+
+      if (!boards || boards.length === 0) {
+        throw new NotFoundError("No boards found for this user", 404);
+      }
+
+      return boards;
+    } catch (error) {
+      if (error instanceof NotFoundError) throw error;
+      throw new InternalServerError("Failed to fetch user boards");
     }
   }
 }

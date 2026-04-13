@@ -7,6 +7,8 @@ import { EntityManager } from "typeorm";
 import { TemplateBoard } from "../entities/template-board.entity";
 import { TemplateList } from "../entities/template-list.entity";
 import { TemplateCard } from "../entities/template-card.entity";
+import { List } from "../entities/list.entity";
+import { Card } from "../entities/card.entity";
 
 class BoardModel {
   private boardRepository = AppDataSource.getRepository(Board);
@@ -17,6 +19,8 @@ class BoardModel {
   private templateBoardRepository = AppDataSource.getRepository(TemplateBoard);
   private templateListRepository = AppDataSource.getRepository(TemplateList);
   private templateCardRepository = AppDataSource.getRepository(TemplateCard);
+  private listRepository = AppDataSource.getRepository(List);
+  private cardRepository = AppDataSource.getRepository(Card);
 
   async getAll(): Promise<Board[]> {
     return await this.boardRepository.find({
@@ -36,12 +40,33 @@ class BoardModel {
         "lists.cards",
       ],
     });
+
     if (!board) return null;
+
+    const activeLists =
+      board.lists
+        ?.filter((l) => !l.is_archived)
+        .map((l) => ({
+          ...l,
+          cards: l.cards?.filter((c) => !c.is_archived) || [],
+        })) || [];
+
     return {
       ...board,
+      lists: activeLists,
       memberCount: board.members?.length || 0,
     };
   }
+
+  async getCreatedBy(boardId: number): Promise<User | null> {
+    const board = await this.boardRepository.findOne({
+      where: { id: boardId },
+      relations: ["created_by"],
+    });
+
+    return board?.created_by || null;
+  }
+
   async updateBoardBackground(
     boardId: number,
     data: { cover_url?: string; theme?: string },
@@ -330,10 +355,16 @@ class BoardModel {
       throw new Error("Board not found or has no creator");
     }
 
+    const owner = await this.userRepository.findOne({
+      where: { id: board.created_by_id },
+    });
+
+    if (!owner) throw new Error("Owner not found");
+
     const template = this.templateBoardRepository.create({
       name: board.name,
       created_by_id: board.created_by_id,
-      owner: { id: board.created_by_id },
+      owner: owner,
       description: board.description ?? null,
       cover_url: board.cover_url ?? null,
       theme: board.theme ?? null,
@@ -381,6 +412,56 @@ class BoardModel {
     }
 
     return savedTemplate;
+  }
+  async getArchived(boardId: number): Promise<{
+    lists: List[];
+    cards: Card[];
+  }> {
+    const archivedLists = await this.listRepository.find({
+      where: {
+        board_id: boardId,
+        is_archived: true,
+      },
+    });
+
+    const archivedCards = await this.cardRepository
+      .createQueryBuilder("card")
+      .leftJoinAndSelect("card.list", "list")
+      .where("list.board_id = :boardId", { boardId })
+      .andWhere("card.is_archived = true")
+      .getMany();
+
+    return {
+      lists: archivedLists,
+      cards: archivedCards,
+    };
+  }
+
+  async getBoardsByUserId(userId: number) {
+    const result = await this.boardRepository
+      .createQueryBuilder("board")
+
+      .leftJoin("board.members", "member")
+
+      .leftJoin("board.lists", "list")
+
+      .where("member.user_id = :userId", { userId })
+      .orWhere("board.created_by_id = :userId", { userId })
+
+      .addSelect("COUNT(DISTINCT member.id)", "memberCount")
+      .addSelect("COUNT(DISTINCT list.id)", "listCount")
+
+      .groupBy("board.id")
+
+      .orderBy("board.created_at", "DESC")
+
+      .getRawAndEntities();
+
+    return result.entities.map((board, index) => ({
+      ...board,
+      memberCount: Number(result.raw[index].memberCount),
+      listCount: Number(result.raw[index].listCount),
+    }));
   }
 }
 

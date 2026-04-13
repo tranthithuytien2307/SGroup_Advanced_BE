@@ -13,6 +13,27 @@ import { uploadAvatarMulter } from "../utils/cloudinary.storage";
 
 export const userRegistry = new OpenAPIRegistry();
 const router = Router();
+
+// ===============================
+// USER: Update own profile
+// Permission: update_self
+// ===============================
+userRegistry.registerPath({
+  method: "put",
+  path: "/api/user/profile",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.null(), "Update user profile"),
+});
+
+router.put(
+  "/user/profile",
+  authMiddleware,
+  authorization("update_self"),
+  validateRequest(UserSchema.UpdateProfile, "body"),
+  asyncHandler(userController.updateProfile),
+);
+
 // ===============================
 // USER: Update avatar
 // Permission: update_self
@@ -158,25 +179,6 @@ router.delete(
   authorization("delete_user"),
   validateRequest(UserSchema.Delete),
   asyncHandler(userController.deleteUser),
-);
-
-// ===============================
-// USER: Update own profile
-// Permission: update_self
-// ===============================
-userRegistry.registerPath({
-  method: "put",
-  path: "/api/user/profile",
-  tags: ["User"],
-  security: [{ BearerAuth: [] }],
-  responses: createApiResponse(z.null(), "Update user profile"),
-});
-
-router.put(
-  "/user/profile",
-  authMiddleware,
-  authorization("update_self"),
-  asyncHandler(userController.updateProfile),
 );
 
 export default router;

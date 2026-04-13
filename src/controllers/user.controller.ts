@@ -90,6 +90,7 @@ class UserController {
 
   static async updateProfile(req: Request, res: Response) {
     const userId = (req as any).user?.id;
+    console.log("                  BODY            :", req.body);
     if (!userId)
       throw new BadRequestError("User ID is required for profile update");
     const updatedUser = await UserService.updateProfile(userId, req.body);

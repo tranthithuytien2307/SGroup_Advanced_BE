@@ -194,7 +194,7 @@ cardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Mark card as completed"),
 });
 
-router.post(
+router.patch(
   "/complete",
   authMiddleware,
   authorizeCardById(["admin", "member"]),

@@ -24,7 +24,7 @@ export class TemplateList {
   @Column()
   name!: string;
 
-  @Column({ default: 0 })
+  @Column({ type: "float" })
   position!: number;
 
   @OneToMany(() => TemplateCard, (c) => c.list)

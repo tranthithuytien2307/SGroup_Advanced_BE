@@ -26,7 +26,7 @@ export const BoardSchema = {
           z
             .string()
             .regex(/^\d+$/, "Workspace ID must be a number")
-            .transform(Number)
+            .transform(Number),
         )
         .openapi({ description: "Workspace ID" }),
       cover_url: z
@@ -118,6 +118,12 @@ export const BoardSchema = {
       board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
     })
     .openapi("UnarchiveBoardParams"),
+    
+  GetArchived: z
+    .object({
+      board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
+    })
+    .openapi("GetArchivedParams"),
 
   UpdateVisibilityParams: z
     .object({

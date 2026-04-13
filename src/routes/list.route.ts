@@ -91,6 +91,42 @@ router.delete(
 
 listRegistery.registerPath({
   method: "patch",
+  path: "/api/list/:id/archive",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: ListSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Archive list"),
+});
+
+listRegistery.registerPath({
+  method: "patch",
+  path: "/api/list/:id/unarchive",
+  tags: ["List"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: ListSchema.GetById,
+  },
+  responses: createApiResponse(z.null(), "Unarchive list"),
+});
+
+router.patch(
+  "/:id/archive",
+  authMiddleware,
+  authorizeListById(["admin", "member"]),
+  asyncHandler(listController.archiveList),
+);
+
+router.patch(
+  "/:id/unarchive",
+  authMiddleware,
+  authorizeListById(["admin", "member"]),
+  asyncHandler(listController.unarchiveList),
+);
+
+listRegistery.registerPath({
+  method: "patch",
   path: "/api/list/:id/move",
   tags: ["List"],
   security: [{ BearerAuth: [] }],

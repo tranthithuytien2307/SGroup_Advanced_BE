@@ -14,6 +14,20 @@ import { uploadBoardBackgroundMulter } from "../utils/cloudinary.storage";
 export const boardRegistry = new OpenAPIRegistry();
 const router = Router();
 
+boardRegistry.registerPath({
+  method: "get",
+  path: "/api/board/my-boards",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.null(), "Get all boards of current user"),
+});
+
+router.get(
+  "/my-boards",
+  authMiddleware,
+  asyncHandler(boardController.getMyBoards),
+);
+
 /**
  * -------------------------
  *   GET ALL BOARDS
@@ -71,6 +85,21 @@ boardRegistry.registerPath({
     "Update success",
   ),
 });
+
+boardRegistry.registerPath({
+  method: "get",
+  path: "/api/board/:id/creator",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: { params: BoardSchema.GetById },
+  responses: createApiResponse(z.null(), "Get board creator"),
+});
+
+router.get(
+  "/:board_id/creator",
+  authMiddleware,
+  asyncHandler(boardController.getCreatedBy),
+);
 
 /**
  * -------------------------
@@ -369,7 +398,7 @@ router.get(
  */
 boardRegistry.registerPath({
   method: "post",
-  path: "/api/board/:id/archive",
+  path: "/api/board/archive/:id",
   tags: ["Board"],
   security: [{ BearerAuth: [] }],
   request: { params: BoardSchema.Archive },
@@ -401,7 +430,32 @@ router.post(
   asyncHandler(boardController.unarchive),
 );
 
-router.put(
+boardRegistry.registerPath({
+  method: "get",
+  path: "/api/board/:board_id/archived",
+  tags: ["Board"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: BoardSchema.GetArchived,
+  },
+  responses: createApiResponse(
+    z.object({
+      lists: z.array(z.any()),
+      cards: z.array(z.any()),
+    }),
+    "Get archived lists and cards",
+  ),
+});
+
+router.get(
+  "/:board_id/archived",
+  authMiddleware,
+  authorizeBoard(["admin", "member"]),
+  validateRequest(BoardSchema.GetArchived, "params"),
+  asyncHandler(boardController.getArchived),
+);
+
+router.patch(
   "/visibility/:board_id",
   authMiddleware,
   authorizeBoard(["admin"]),

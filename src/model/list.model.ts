@@ -28,14 +28,22 @@ class ListModel {
   }
 
   async getListsByBoardId(boardId: number): Promise<List[]> {
-    return await this.listRepository.find({
-      where: { board_id: boardId, is_archived: false },
-      order: {
-        position: "ASC",
-        cards: { position: "ASC" },
-      },
-      relations: ["cards", "cards.checklists"],
-    });
+    return await this.listRepository
+      .createQueryBuilder("list")
+      .leftJoinAndSelect(
+        "list.cards",
+        "card",
+        "card.is_archived = :isArchived",
+        { isArchived: false },
+      )
+      .leftJoinAndSelect("card.checklists", "checklist")
+      .where("list.board_id = :boardId", { boardId })
+      .andWhere("list.is_archived = :listArchived", {
+        listArchived: false,
+      })
+      .orderBy("list.position", "ASC")
+      .addOrderBy("card.position", "ASC")
+      .getMany();
   }
 
   async getArchivedListsByBoardId(boardId: number): Promise<List[]> {
@@ -62,6 +70,20 @@ class ListModel {
 
   async bulkUpdate(lists: List[]): Promise<void> {
     await this.listRepository.save(lists);
+  }
+
+  async getListByIdWithRelations(id: number): Promise<List | null> {
+    return this.listRepository.findOne({
+      where: { id },
+      relations: [
+        "cards",
+        "cards.labels",
+        "cards.members",
+        "cards.members.user",
+        "cards.checklists",
+        "cards.checklists.items",
+      ],
+    });
   }
 }
 

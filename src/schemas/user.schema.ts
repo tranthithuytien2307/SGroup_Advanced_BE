@@ -53,6 +53,31 @@ export const UserSchema = {
       }),
     })
     .openapi("DeleteUserParams"),
+
+  UpdateProfile: z
+    .object({
+      name: z
+        .string()
+        .min(2)
+        .max(100)
+        .optional()
+        .openapi({ description: "Full name" }),
+
+      email: z
+        .string()
+        .email()
+        .optional()
+        .openapi({ description: "User email" }),
+
+      bio: z
+        .union([z.string().max(500), z.null()])
+        .optional()
+        .openapi({ description: "User bio" }),
+    })
+    .refine((b) => Object.keys(b).length > 0, {
+      message: "At least one field must be provided",
+    })
+    .openapi("UpdateUserProfileRequest"),
 };
 
 export type CreateUserInput = z.infer<typeof UserSchema.Create>;
