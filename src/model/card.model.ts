@@ -3,6 +3,8 @@ import { AppDataSource } from "../data-source";
 import { CardMember } from "../entities/card-member.entity";
 import { Checklist } from "../entities/checklist.entity";
 import { ChecklistItem } from "../entities/checklist-item.entity";
+import { EntityManager } from "typeorm";
+import { TemplateList } from "../entities/template-list.entity";
 
 class CardModel {
   private cardRepository = AppDataSource.getRepository(Card);
@@ -219,6 +221,34 @@ class CardModel {
     );
 
     return { ...card, is_completed: updatedStatus };
+  }
+
+  async createCardsFromTemplate(
+    manager: EntityManager,
+    listMap: Map<number, number>,
+    templateLists: TemplateList[]
+  ): Promise<void> {
+    const cardRepo = manager.getRepository(Card);
+
+    for (const tl of templateLists) {
+      const newListId = listMap.get(tl.id);
+      if (!newListId) continue;
+      
+      if (tl.cards && tl.cards.length > 0) {
+        let maxPos = 1;
+        for (const tc of tl.cards) {
+          const card = cardRepo.create({
+            list_id: newListId,
+            list: { id: newListId },
+            title: tc.title,
+            description: tc.description,
+            position: maxPos++,
+            is_archived: false,
+          } as Partial<Card>);
+          await cardRepo.save(card);
+        }
+      }
+    }
   }
 }
 

@@ -10,7 +10,8 @@
     "lint": "eslint . --ext .ts",
     "prepare": "husky",
     "test": "echo \"No tests yet\" && exit 0",
-    "seed:rbac": "ts-node src/seeds/app-role.seed.ts"
+    "seed:rbac": "ts-node src/seeds/app-role.seed.ts",
+    "seed:all": "ts-node src/seeds/seed-all.ts"
   },
   "keywords": [],
   "author": "",
