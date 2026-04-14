@@ -34,6 +34,15 @@ export const AuthSchema = {
     })
     .openapi("RefreshTokenRequest"),
 
+  Logout: z
+    .object({
+      refreshToken: z
+        .string()
+        .nonempty("Refresh token is required")
+        .openapi({ description: "Refresh token to revoke" }),
+    })
+    .openapi("LogoutRequest"),
+
   VerifyEmail: z
     .object({
       email: z.string().email().openapi({ description: "Email to verify" }),
@@ -86,6 +95,7 @@ export const AuthSchema = {
 export type LoginInput = z.infer<typeof AuthSchema.Login>;
 export type RegisterInput = z.infer<typeof AuthSchema.Register>;
 export type RefreshTokenInput = z.infer<typeof AuthSchema.RefreshToken>;
+export type LogoutInput = z.infer<typeof AuthSchema.Logout>;
 export type VerifyEmailInput = z.infer<typeof AuthSchema.VerifyEmail>;
 export type ForgotPasswordInput = z.infer<typeof AuthSchema.ForgotPassword>;
 export type ResetPasswordInput = z.infer<typeof AuthSchema.ResetPassword>;

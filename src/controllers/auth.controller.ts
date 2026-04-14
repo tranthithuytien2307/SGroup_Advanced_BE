@@ -46,6 +46,30 @@ class AuthController {
     );
   };
 
+  logoutUser = async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+    const userPayload = (req as any).user;
+
+    if (!userPayload?.id) {
+      throw new ForbiddenError("Unauthorized access");
+    }
+
+    if (!refreshToken) {
+      throw new BadRequestError("Refresh token is required");
+    }
+
+    await authService.logoutUser(userPayload.id, refreshToken);
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Logout success",
+        null,
+        200,
+      ),
+      res,
+    );
+  };
+
   registerUser = async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
     const user = await authService.registerUser(email, password, name);

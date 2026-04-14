@@ -96,6 +96,26 @@ router.post(
 
 authRegistry.registerPath({
   method: "post",
+  path: "/api/auth/logout",
+  tags: ["Auth"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: { "application/json": { schema: AuthSchema.Logout } },
+    },
+  },
+  responses: createApiResponse(z.null(), "Logout successfully"),
+});
+
+router.post(
+  "/logout",
+  authMiddleware,
+  validateRequest(AuthSchema.Logout),
+  asyncHandler(authController.logoutUser),
+);
+
+authRegistry.registerPath({
+  method: "post",
   path: "/api/auth/forgot-password",
   tags: ["Auth"],
   request: {

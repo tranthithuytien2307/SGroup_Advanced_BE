@@ -232,6 +232,31 @@ class AuthService {
     }
   }
 
+  async logoutUser(userId: number, refreshToken: string): Promise<void> {
+    try {
+      if (!refreshToken) {
+        throw new BadRequestError("Refresh token is required");
+      }
+
+      const user = await authModel.getUserById(userId);
+      if (!user) {
+        throw new ErrorResponse("User not found", 404);
+      }
+
+      const userWithToken = await authModel.getUserByRefreshToken(refreshToken);
+      if (!userWithToken || userWithToken.id !== userId) {
+        throw new AuthFailureError("Invalid refresh token");
+      }
+
+      await authModel.updateRefreshToken(userId, null);
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error;
+      }
+      throw new InternalServerError("Failed to logout user");
+    }
+  }
+
   async getUserInformation(userId: number): Promise<User | null> {
     try {
       const user = await authModel.getUserById(userId);

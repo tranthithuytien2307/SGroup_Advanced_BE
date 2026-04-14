@@ -81,7 +81,7 @@ class AuthModel {
 
   async updateRefreshToken(
     userId: number,
-    refreshToken: string,
+    refreshToken: string | null,
   ): Promise<void> {
     try {
       const userRepository = AppDataSource.getRepository(User);
