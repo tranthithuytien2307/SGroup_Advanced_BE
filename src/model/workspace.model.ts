@@ -1,10 +1,12 @@
 import { AppDataSource } from "../data-source";
 import { Workspace } from "../entities/workspace.entity";
 import { WorkspaceMember } from "../entities/workspace-member.entity";
+import { Board } from "../entities/board.entity";
 
 class WorkspaceModel {
   private workspaceRepository = AppDataSource.getRepository(Workspace);
   private memberRepository = AppDataSource.getRepository(WorkspaceMember);
+  private boardRepository = AppDataSource.getRepository(Board);
 
   async getAll() {
     return await this.workspaceRepository.find({
@@ -81,6 +83,69 @@ class WorkspaceModel {
 
   async updateWorkspace(workspace: Workspace): Promise<Workspace> {
     return await this.workspaceRepository.save(workspace);
+  }
+
+  async getArchivedBoardsByWorkspaceId(workspace_id: number) {
+    const result = await this.boardRepository
+      .createQueryBuilder("board")
+      .leftJoin("board.members", "member")
+      .leftJoin("board.lists", "list")
+      .where("board.workspace_id = :workspace_id", { workspace_id })
+      .andWhere("board.is_archived = :is_archived", { is_archived: true })
+      .addSelect("COUNT(DISTINCT member.id)", "memberCount")
+      .addSelect("COUNT(DISTINCT list.id)", "listCount")
+      .groupBy("board.id")
+      .orderBy("board.id", "ASC")
+      .getRawAndEntities();
+
+    return result.entities.map((board, index) => ({
+      ...board,
+      memberCount: Number(result.raw[index].memberCount),
+      listCount: Number(result.raw[index].listCount),
+    }));
+  }
+
+  async archiveWorkspace(workspace_id: number) {
+    await this.workspaceRepository.update(
+      { id: workspace_id },
+      { is_archived: true },
+    );
+
+    return { workspace_id, is_archived: true };
+  }
+
+  async unarchiveWorkspace(workspace_id: number) {
+    await this.workspaceRepository.update(
+      { id: workspace_id },
+      { is_archived: false },
+    );
+
+    const workspace = await this.workspaceRepository.findOne({
+      where: { id: workspace_id },
+      relations: ["owner"],
+    });
+
+    if (!workspace) {
+      throw new Error("Workspace not found after unarchive");
+    }
+
+    return workspace;
+  }
+
+  async getArchivedWorkspacesByUser(userId: number) {
+    return await this.workspaceRepository
+      .createQueryBuilder("workspace")
+      .leftJoin("workspace.members", "member")
+      .leftJoinAndSelect("workspace.owner", "owner")
+      .where("member.user_id = :userId", { userId })
+      .andWhere("workspace.is_archived = :is_archived", {
+        is_archived: true,
+      })
+      .andWhere("workspace.is_delete = :is_delete", {
+        is_delete: false,
+      })
+      .orderBy("workspace.id", "ASC")
+      .getMany();
   }
 }
 

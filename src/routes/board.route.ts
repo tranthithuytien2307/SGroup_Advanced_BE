@@ -175,7 +175,7 @@ router.put(
   "/:board_id",
   authMiddleware,
   authorizeBoard(["admin", "member"]),
-  validateRequest(BoardSchema.Update),
+  validateRequest(BoardSchema.Update, "body"),
   asyncHandler(boardController.update),
 );
 
@@ -397,7 +397,7 @@ router.get(
  *  Quyền board: admin
  */
 boardRegistry.registerPath({
-  method: "post",
+  method: "patch",
   path: "/api/board/archive/:id",
   tags: ["Board"],
   security: [{ BearerAuth: [] }],
@@ -405,7 +405,7 @@ boardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Archive board"),
 });
 
-router.post(
+router.patch(
   "/archive/:board_id",
   authMiddleware,
   authorizeBoard(["admin"]),
@@ -414,7 +414,7 @@ router.post(
 );
 
 boardRegistry.registerPath({
-  method: "post",
+  method: "patch",
   path: "/api/board/:id/unarchive",
   tags: ["Board"],
   security: [{ BearerAuth: [] }],
@@ -422,7 +422,7 @@ boardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Unarchive board"),
 });
 
-router.post(
+router.patch(
   "/unarchive/:board_id",
   authMiddleware,
   authorizeBoard(["admin"]),

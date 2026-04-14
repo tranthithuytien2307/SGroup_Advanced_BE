@@ -133,6 +133,101 @@ class WorkspaceController {
       res,
     );
   };
+
+  getArchivedBoards = async (req: Request, res: Response) => {
+    const workspaceId = parseInt(req.params.workspace_id, 10);
+
+    if (Number.isNaN(workspaceId)) {
+      throw new BadRequestError("Invalid workspace id");
+    }
+
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      throw new BadRequestError("Unauthorized");
+    }
+
+    const data = await workspaceService.getArchivedBoards(workspaceId, userId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Get archived boards successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
+  archiveWorkspace = async (req: Request, res: Response) => {
+    const workspaceId = parseInt(req.params.workspace_id, 10);
+
+    if (Number.isNaN(workspaceId)) {
+      throw new BadRequestError("Invalid workspace id");
+    }
+
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      throw new BadRequestError("Unauthorized");
+    }
+
+    const data = await workspaceService.archiveWorkspace(workspaceId, userId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Archive workspace successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
+  unarchiveWorkspace = async (req: Request, res: Response) => {
+    const workspaceId = parseInt(req.params.workspace_id, 10);
+
+    if (Number.isNaN(workspaceId)) {
+      throw new BadRequestError("Invalid workspace id");
+    }
+
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      throw new BadRequestError("Unauthorized");
+    }
+
+    const data = await workspaceService.unarchiveWorkspace(workspaceId, userId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Unarchive workspace successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
+
+  getArchivedWorkspaces = async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      throw new BadRequestError("Unauthorized");
+    }
+
+    const data = await workspaceService.getArchivedWorkspaces(userId);
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Get archived workspaces successfully",
+        data,
+        200,
+      ),
+      res,
+    );
+  };
 }
 
 export default new WorkspaceController();
