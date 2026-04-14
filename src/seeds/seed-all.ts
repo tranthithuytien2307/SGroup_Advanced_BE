@@ -70,6 +70,7 @@ export const seedAll = async () => {
     { name: "create_user" },
     { name: "delete_user" },
     { name: "update_user" },
+    { name: "update_self" },
     { name: "view_all" },
     { name: "view_self" },
   ];
@@ -86,9 +87,9 @@ export const seedAll = async () => {
   console.log("\n── Seeding Role-Permission Mappings ──");
   const rolePermRepo = AppDataSource.getRepository(RolePermission);
   const rolePermMap: Record<string, string[]> = {
-    admin: ["create_user", "delete_user", "update_user", "view_all", "view_self"],
-    staff: ["update_user", "view_all", "view_self"],
-    user: ["view_self"],
+    admin: ["create_user", "delete_user", "update_user", "update_self", "view_all", "view_self"],
+    staff: ["update_user", "update_self", "view_all", "view_self"],
+    user: ["update_self", "view_self"],
   };
   for (const [roleName, permNames] of Object.entries(rolePermMap)) {
     for (const permName of permNames) {

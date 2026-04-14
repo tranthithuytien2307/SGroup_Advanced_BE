@@ -11,7 +11,8 @@
     "prepare": "husky",
     "test": "echo \"No tests yet\" && exit 0",
     "seed:rbac": "ts-node src/seeds/app-role.seed.ts",
-    "seed:all": "ts-node src/seeds/seed-all.ts"
+    "seed:all": "ts-node src/seeds/seed-all.ts",
+    "migrate:update-self": "ts-node src/seeds/add-update-self-permission.ts"
   },
   "keywords": [],
   "author": "",
