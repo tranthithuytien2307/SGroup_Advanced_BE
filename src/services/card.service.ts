@@ -2,17 +2,20 @@ import cardModel from "../model/card.model";
 import listModel from "../model/list.model";
 import {
   BadRequestError,
+  ConflictRequestError,
   ErrorResponse,
   InternalServerError,
   NotFoundError,
 } from "../handler/error.response";
 import { Card } from "../entities/card.entity";
 import { List } from "../entities/list.entity";
+import { Board } from "../entities/board.entity";
 import boardModel from "../model/board.model";
 import { AppDataSource } from "../data-source";
 import { BoardMember } from "../entities/board-member.entity";
 import { User } from "../entities/user.entity";
 import { CardMember } from "../entities/card-member.entity";
+import { EntityManager } from "typeorm";
 
 class CardService {
   async createCard(listId: number, title: string) {
@@ -30,18 +33,47 @@ class CardService {
     }
   }
 
-  async updateCard(id: number, data: Partial<Card>) {
+  async updateCard(
+    id: number,
+    data: Partial<Card> & { version: number },
+  ) {
     try {
-      const card = await cardModel.getById(id);
-      if (!card) throw new NotFoundError("Card not found");
+      const updateData: Record<string, unknown> = {};
 
-      if (data.title !== undefined) card.title = data.title;
-      if (data.description !== undefined) card.description = data.description;
-      if (data.cover_color !== undefined) card.cover_color = data.cover_color;
-      if (data.cover_image_url !== undefined)
-        card.cover_image_url = data.cover_image_url;
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.cover_color !== undefined) updateData.cover_color = data.cover_color;
+      if (data.cover_image_url !== undefined) {
+        updateData.cover_image_url = data.cover_image_url;
+      }
 
-      return await cardModel.updateCard(card);
+      if (Object.keys(updateData).length === 0) {
+        throw new BadRequestError("No card fields to update");
+      }
+
+      const result = await AppDataSource.getRepository(Card)
+        .createQueryBuilder()
+        .update(Card)
+        .set({
+          ...updateData,
+          version: () => `"version" + 1`,
+        })
+        .where("id = :id AND version = :version", {
+          id,
+          version: data.version,
+        })
+        .returning("*")
+        .execute();
+
+      if (!result.affected) {
+        const exists = await cardModel.getById(id);
+        if (!exists) throw new NotFoundError("Card not found");
+        throw new ConflictRequestError(
+          "Card was updated by another user. Please refresh and try again.",
+        );
+      }
+
+      return await cardModel.getById(id);
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to update card");
@@ -138,42 +170,12 @@ class CardService {
     }
   }
 
-  async reorderCard(id: number, newIndex: number) {
+  async reorderCard(id: number, newIndex: number, boardVersion: number) {
     try {
-      const card = await cardModel.getById(id);
-      if (!card) throw new NotFoundError("Card not found");
-
-      const listId = card.list_id;
-      const cards = await cardModel.getCardsByListId(listId);
-
-      const filteredCards = cards.filter((c) => c.id !== id);
-
-      if (newIndex < 0 || newIndex > filteredCards.length) {
-        throw new BadRequestError("Invalid new index");
-      }
-
-      let newPosition: number;
-      if (filteredCards.length === 0) {
-        newPosition = 100;
-      } else if (newIndex === filteredCards.length) {
-        newPosition = filteredCards[filteredCards.length - 1].position + 100;
-      } else if (newIndex === 0) {
-        newPosition = filteredCards[0].position / 2;
-      } else {
-        const prev = filteredCards[newIndex - 1];
-        const next = filteredCards[newIndex];
-        newPosition = (prev.position + next.position) / 2;
-      }
-
-      card.position = newPosition;
-      await cardModel.updateCard(card);
-
-      const needReindex = this.shouldReindex(filteredCards);
-      if (needReindex) {
-        await this.reindexList(listId);
-      }
-
-      return await cardModel.getCardsByListId(listId);
+      const moved = await this.moveCard(id, undefined, undefined, newIndex, {
+        boardVersion,
+      });
+      return moved.cards;
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to reorder card");
@@ -182,31 +184,119 @@ class CardService {
 
   async moveCard(
     id: number,
-    toBoardId: number,
-    toListId: number,
+    toBoardId: number | undefined,
+    toListId: number | undefined,
     newIndex: number,
+    versions: { boardVersion: number; targetBoardVersion?: number },
   ) {
     try {
-      const card = await cardModel.getById(id);
-      if (!card) throw new NotFoundError("Card not found");
+      const { sourceBoardId, targetBoardId, targetListId } =
+        await AppDataSource.transaction(
+        async (manager) => {
+          const cardRepo = manager.getRepository(Card);
+          const listRepo = manager.getRepository(List);
 
-      const fromListId = card.list_id;
+          const card = await cardRepo.findOne({ where: { id } });
+          if (!card) throw new NotFoundError("Card not found");
 
-      card.list_id = toListId;
-      await cardModel.updateMoveCard(card);
+          const fromList = await listRepo.findOne({ where: { id: card.list_id } });
+          if (!fromList) throw new NotFoundError("Source list not found");
 
-      console.log("AFTER UPDATE CARD:", {
-        id: card.id,
-        list_id: card.list_id,
-      });
+          const destinationListId = toListId ?? fromList.id;
+          const targetList = await listRepo.findOne({
+            where: { id: destinationListId },
+          });
+          if (!targetList) throw new NotFoundError("Target list not found");
 
-      if (fromListId !== toListId) {
-        await this.reindexList(fromListId);
-      }
+          const resolvedTargetBoardId = toBoardId ?? targetList.board_id;
+          if (targetList.board_id !== resolvedTargetBoardId) {
+            throw new BadRequestError("Target list does not belong to target board");
+          }
 
-      await this.reindexList(toListId, id, newIndex);
+          await this.bumpBoardVersion(manager, fromList.board_id, versions.boardVersion);
 
-      return await cardModel.getCardsByListId(toListId);
+          if (
+            resolvedTargetBoardId !== fromList.board_id &&
+            versions.targetBoardVersion === undefined
+          ) {
+            throw new BadRequestError("Target board version is required");
+          }
+
+          if (resolvedTargetBoardId !== fromList.board_id) {
+            await this.bumpBoardVersion(
+              manager,
+              resolvedTargetBoardId,
+              versions.targetBoardVersion!,
+            );
+          }
+
+          const fromCards = await cardRepo.find({
+            where: { list_id: fromList.id, is_archived: false },
+            order: { position: "ASC" },
+          });
+
+          const toCards =
+            fromList.id === targetList.id
+              ? [...fromCards]
+              : await cardRepo.find({
+                  where: { list_id: targetList.id, is_archived: false },
+                  order: { position: "ASC" },
+                });
+
+          const sourceWithoutCard = fromCards.filter((current) => current.id !== id);
+
+          if (newIndex < 0) {
+            throw new BadRequestError("Invalid new index");
+          }
+
+          if (fromList.id === targetList.id) {
+            if (newIndex > sourceWithoutCard.length) {
+              throw new BadRequestError("Invalid new index");
+            }
+
+            sourceWithoutCard.splice(newIndex, 0, card);
+            sourceWithoutCard.forEach((current, index) => {
+              current.position = (index + 1) * 100;
+              current.list_id = fromList.id;
+            });
+
+            await cardRepo.save(sourceWithoutCard);
+          } else {
+            if (newIndex > toCards.length) {
+              throw new BadRequestError("Invalid new index");
+            }
+
+            const targetWithCard = [...toCards];
+            card.list_id = targetList.id;
+            targetWithCard.splice(newIndex, 0, card);
+
+            sourceWithoutCard.forEach((current, index) => {
+              current.position = (index + 1) * 100;
+            });
+            targetWithCard.forEach((current, index) => {
+              current.position = (index + 1) * 100;
+              current.list_id = targetList.id;
+            });
+
+            await cardRepo.save(sourceWithoutCard);
+            await cardRepo.save(targetWithCard);
+          }
+
+          return {
+            sourceBoardId: fromList.board_id,
+            targetBoardId: resolvedTargetBoardId,
+            targetListId: targetList.id,
+          };
+        },
+      );
+
+      return {
+        boardIds:
+          sourceBoardId === targetBoardId
+            ? [sourceBoardId]
+            : [sourceBoardId, targetBoardId],
+        cards: await cardModel.getCardsByListId(targetListId),
+      };
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to move card");
@@ -288,6 +378,38 @@ class CardService {
       }
     }
     return false;
+  }
+
+  private async bumpBoardVersion(
+    manager: EntityManager,
+    boardId: number,
+    expectedVersion: number,
+  ) {
+    const updateResult = await manager
+      .createQueryBuilder()
+      .update(Board)
+      .set({
+        version: () => `"version" + 1`,
+      })
+      .where("id = :boardId AND version = :expectedVersion", {
+        boardId,
+        expectedVersion,
+      })
+      .execute();
+
+    if (!updateResult.affected) {
+      const board = await manager.getRepository(Board).findOne({
+        where: { id: boardId },
+      });
+
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      throw new ConflictRequestError(
+        "Board order changed by another user. Please refresh and try again.",
+      );
+    }
   }
 
   async deleteCard(id: number): Promise<void> {

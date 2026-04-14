@@ -34,6 +34,16 @@ app.get("/api/health", (_, res) => res.json({ status: "ok" }));
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  socket.on("join-board", (boardId: number) => {
+    socket.join(`board-${boardId}`);
+    console.log(`Joined room board-${boardId}`);
+  });
+
+  socket.on("leave-board", (boardId: number) => {
+    socket.leave(`board-${boardId}`);
+    console.log(`Left room board-${boardId}`);
+  });
+
   socket.on("join-card", (cardId: number) => {
     socket.join(`card-${cardId}`);
     console.log(`Joined room card-${cardId}`);

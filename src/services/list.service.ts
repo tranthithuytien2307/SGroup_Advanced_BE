@@ -3,11 +3,15 @@ import boardModel from "../model/board.model";
 import cardModel from "../model/card.model";
 import {
   BadRequestError,
+  ConflictRequestError,
   ErrorResponse,
   InternalServerError,
   NotFoundError,
 } from "../handler/error.response";
 import { List } from "../entities/list.entity";
+import { Board } from "../entities/board.entity";
+import { AppDataSource } from "../data-source";
+import { EntityManager } from "typeorm";
 
 class ListService {
   async getListsByBoard(boardId: number) {
@@ -40,17 +44,42 @@ class ListService {
     }
   }
 
-  async updateList(id: number, data: Partial<List>) {
+  async updateList(id: number, data: Partial<List> & { version: number }) {
     try {
-      const list = await listModel.getListById(id);
-      if (!list) throw new NotFoundError("List not found");
+      const updateData: Record<string, unknown> = {};
 
-      if (data.name !== undefined) list.name = data.name;
-      if (data.cover_url !== undefined) list.cover_url = data.cover_url;
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.cover_url !== undefined) updateData.cover_url = data.cover_url;
 
-      return await listModel.updateList(list);
+      if (Object.keys(updateData).length === 0) {
+        throw new BadRequestError("No list fields to update");
+      }
+
+      const result = await AppDataSource.getRepository(List)
+        .createQueryBuilder()
+        .update(List)
+        .set({
+          ...updateData,
+          version: () => `"version" + 1`,
+        })
+        .where("id = :id AND version = :version", {
+          id,
+          version: data.version,
+        })
+        .returning("*")
+        .execute();
+
+      if (!result.affected) {
+        const exists = await listModel.getListById(id);
+        if (!exists) throw new NotFoundError("List not found");
+        throw new ConflictRequestError(
+          "List was updated by another user. Please refresh and try again.",
+        );
+      }
+
+      return await listModel.getListById(id);
     } catch (error) {
-      if (error instanceof NotFoundError) throw error;
+      if (error instanceof ErrorResponse) throw error;
       throw new InternalServerError("Failed to update list");
     }
   }
@@ -94,40 +123,95 @@ class ListService {
     }
   }
 
-  async moveList(id: number, newBoardId: number, newIndex: number) {
+  async moveList(
+    id: number,
+    newBoardId: number,
+    newIndex: number,
+    versions: { boardVersion: number; targetBoardVersion?: number },
+  ) {
     try {
-      const list = await listModel.getListById(id);
-      if (!list) throw new NotFoundError("List not found");
+      const { sourceBoardId, targetBoardId } = await AppDataSource.transaction(
+        async (manager) => {
+          const listRepo = manager.getRepository(List);
+          const boardRepo = manager.getRepository(Board);
 
-      const targetBoard = await boardModel.getById(newBoardId);
-      if (!targetBoard) throw new NotFoundError("Target board not found");
+          const list = await listRepo.findOne({ where: { id } });
+          if (!list) throw new NotFoundError("List not found");
 
-      let lists = await listModel.getListsByBoardId(newBoardId);
+          const targetBoard = await boardRepo.findOne({
+            where: { id: newBoardId },
+          });
+          if (!targetBoard) throw new NotFoundError("Target board not found");
 
-      lists = lists.filter((l) => l.id !== list.id);
+          await this.bumpBoardVersion(manager, list.board_id, versions.boardVersion);
 
-      let newPosition: number;
+          if (
+            newBoardId !== list.board_id &&
+            versions.targetBoardVersion === undefined
+          ) {
+            throw new BadRequestError("Target board version is required");
+          }
 
-      if (newIndex <= 0) {
-        const first = lists[0];
-        newPosition = first ? first.position / 2 : 100;
-      } else if (newIndex >= lists.length) {
-        const last = lists[lists.length - 1];
-        newPosition = last ? last.position + 100 : 100;
-      } else {
-        const prev = lists[newIndex - 1];
-        const next = lists[newIndex];
+          if (newBoardId !== list.board_id) {
+            await this.bumpBoardVersion(
+              manager,
+              newBoardId,
+              versions.targetBoardVersion!,
+            );
+          }
 
-        newPosition = (prev.position + next.position) / 2;
-      }
+          const targetLists = await listRepo.find({
+            where: { board_id: newBoardId, is_archived: false },
+            order: { position: "ASC" },
+          });
 
-      list.board = targetBoard;
-      list.board_id = newBoardId;
-      list.position = newPosition;
+          const filteredLists = targetLists.filter((current) => current.id !== id);
 
-      return await listModel.updateList(list);
+          if (newIndex < 0 || newIndex > filteredLists.length) {
+            throw new BadRequestError("Invalid new index");
+          }
+
+          filteredLists.splice(newIndex, 0, {
+            ...list,
+            board_id: newBoardId,
+          });
+
+          filteredLists.forEach((current, index) => {
+            current.position = (index + 1) * 100;
+            current.board_id = newBoardId;
+          });
+
+          await listRepo.save(filteredLists);
+
+          if (list.board_id !== newBoardId) {
+            const sourceLists = await listRepo.find({
+              where: { board_id: list.board_id, is_archived: false },
+              order: { position: "ASC" },
+            });
+
+            sourceLists.forEach((current, index) => {
+              current.position = (index + 1) * 100;
+            });
+
+            await listRepo.save(sourceLists);
+          }
+
+          return {
+            sourceBoardId: list.board_id,
+            targetBoardId: newBoardId,
+          };
+        },
+      );
+
+      return {
+        boardIds:
+          sourceBoardId === targetBoardId
+            ? [sourceBoardId]
+            : [sourceBoardId, targetBoardId],
+        list: await listModel.getListById(id),
+      };
     } catch (error) {
-      if (error instanceof NotFoundError) throw error;
+      if (error instanceof ErrorResponse) throw error;
       throw new InternalServerError("Failed to move list");
     }
   }
@@ -167,64 +251,55 @@ class ListService {
     }
   }
 
-  private shouldReindex(lists: List[]): boolean {
-    for (let i = 1; i < lists.length; i++) {
-      if (Math.abs(lists[i].position - lists[i - 1].position) < 0.0001) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private async reindexBoard(boardId: number) {
-    const lists = await listModel.getListsByBoardId(boardId);
-
-    for (let i = 0; i < lists.length; i++) {
-      lists[i].position = (i + 1) * 100;
-    }
-
-    await listModel.bulkUpdate(lists);
-  }
-
-  async reorderList(id: number, newIndex: number) {
+  async reorderList(id: number, newIndex: number, boardVersion: number) {
     try {
       const list = await listModel.getListById(id);
       if (!list) throw new NotFoundError("List not found");
 
-      const lists = await this.getListsByBoard(list.board_id);
-
-      const filteredLists = lists.filter((l) => l.id !== id);
-
-      if (newIndex < 0 || newIndex > filteredLists.length) {
-        throw new BadRequestError("Invalid new index");
+      const moved = await this.moveList(id, list.board_id, newIndex, {
+        boardVersion,
+      });
+      const movedList = moved.list;
+      if (!movedList) {
+        throw new NotFoundError("List not found");
       }
-
-      let newPosition: number;
-      if (filteredLists.length === 0) newPosition = 100;
-      else if (newIndex === filteredLists.length) {
-        newPosition = filteredLists[filteredLists.length - 1].position + 100;
-      } else if (newIndex === 0) {
-        newPosition = filteredLists[0].position / 2;
-      } else {
-        const prev = filteredLists[newIndex - 1];
-        const next = filteredLists[newIndex];
-        newPosition = (prev.position + next.position) / 2;
-      }
-
-      list.position = newPosition;
-
-      await listModel.updateList(list);
-
-      const needReindex = this.shouldReindex(filteredLists);
-      if (needReindex) {
-        await this.reindexBoard(list.board_id);
-      }
-
-      return await this.getListsByBoard(list.board_id);
+      return await this.getListsByBoard(movedList.board_id);
     } catch (error) {
-      if (error instanceof NotFoundError || error instanceof BadRequestError)
+      if (error instanceof ErrorResponse)
         throw error;
       throw new InternalServerError("Failed to reorder list");
+    }
+  }
+
+  private async bumpBoardVersion(
+    manager: EntityManager,
+    boardId: number,
+    expectedVersion: number,
+  ) {
+    const updateResult = await manager
+      .createQueryBuilder()
+      .update(Board)
+      .set({
+        version: () => `"version" + 1`,
+      })
+      .where("id = :boardId AND version = :expectedVersion", {
+        boardId,
+        expectedVersion,
+      })
+      .execute();
+
+    if (!updateResult.affected) {
+      const board = await manager.getRepository(Board).findOne({
+        where: { id: boardId },
+      });
+
+      if (!board) {
+        throw new NotFoundError("Board not found");
+      }
+
+      throw new ConflictRequestError(
+        "Board order changed by another user. Please refresh and try again.",
+      );
     }
   }
 }

@@ -37,6 +37,11 @@ export const ListSchema = {
     .openapi("CreateListRequest"),
   Update: z
     .object({
+      version: z
+        .number()
+        .int()
+        .nonnegative()
+        .openapi({ description: "Current list version" }),
       name: z.string().min(3).optional().openapi({ description: "List name" }),
       cover_url: z
         .string()
@@ -44,17 +49,35 @@ export const ListSchema = {
         .optional()
         .openapi({ description: "Cover URL" }),
     })
-    .refine((b) => Object.keys(b).length > 0, {
+    .refine((b) => b.name !== undefined || b.cover_url !== undefined, {
       message: "At least one field must be provided",
     })
     .openapi("UpdateListRequest"),
   Move: z
     .object({
       newBoardId: z
-        .string()
-        .regex(/^\d+$/, "List board new must be a number")
+        .number()
+        .or(
+          z
+            .string()
+            .regex(/^\d+$/, "List board new must be a number")
+            .transform(Number),
+        )
         .openapi({
           description: "List ID",
+        }),
+      board_version: z
+        .number()
+        .int()
+        .nonnegative()
+        .openapi({ description: "Current source board version" }),
+      target_board_version: z
+        .number()
+        .int()
+        .nonnegative()
+        .optional()
+        .openapi({
+          description: "Current target board version if moving across boards",
         }),
       newIndex: z
         .number()
@@ -75,6 +98,11 @@ export const ListSchema = {
 
   Reorder: z
     .object({
+      board_version: z
+        .number()
+        .int()
+        .nonnegative()
+        .openapi({ description: "Current board version" }),
       newIndex: z
         .number()
         .min(0)

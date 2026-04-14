@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  VersionColumn,
 } from "typeorm";
 import { Board } from "./board.entity";
 import { Card } from "./card.entity";
@@ -34,6 +35,9 @@ export class List {
 
   @Column({ type: "timestamp", nullable: true })
   archived_at!: Date | null;
+
+  @VersionColumn({ default: 1 })
+  version!: number;
 
   @OneToMany(() => Card, (c) => c.list)
   cards!: Card[];

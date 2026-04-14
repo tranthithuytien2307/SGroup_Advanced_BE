@@ -55,7 +55,7 @@ class CardModel {
   async getCardsByListId(listId: number): Promise<Card[]> {
     return await this.cardRepository.find({
       where: { list_id: listId, is_archived: false },
-      relations: ["members", "members.user"],
+      relations: ["list", "members", "members.user"],
       order: { position: "ASC" },
     });
   }

@@ -8,6 +8,7 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import z from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
 import { ListSchema } from "../schemas/list.schema";
+import { validateRequest } from "../utils/http-handler";
 const router = Router();
 export const listRegistery = new OpenAPIRegistry();
 
@@ -68,6 +69,8 @@ router.patch(
   "/:id",
   authMiddleware,
   authorizeListById(["admin", "member"]),
+  validateRequest(ListSchema.GetById, "params"),
+  validateRequest(ListSchema.Update, "body"),
   asyncHandler(listController.updateList),
 );
 
@@ -141,6 +144,8 @@ router.patch(
   "/:id/move",
   authMiddleware,
   authorizeListById(["admin", "member"]),
+  validateRequest(ListSchema.GetById, "params"),
+  validateRequest(ListSchema.Move, "body"),
   asyncHandler(listController.moveList),
 );
 
@@ -179,6 +184,8 @@ router.patch(
   "/:id/reorder",
   authMiddleware,
   authorizeListById(["admin", "member"]),
+  validateRequest(ListSchema.GetById, "params"),
+  validateRequest(ListSchema.Reorder, "body"),
   asyncHandler(listController.reorderList),
 );
 

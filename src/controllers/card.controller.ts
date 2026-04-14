@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import cardService from "../services/card.service";
 import { ServiceResponse, ResponseStatus } from "../provides/service.response";
 import { handleServiceResponse } from "../utils/http-handler";
+import boardRealtimeService from "../services/board-realtime.service";
 
 class CardController {
   async createCard(req: Request, res: Response) {
@@ -25,6 +26,9 @@ class CardController {
     const data = req.body;
 
     const card = await cardService.updateCard(id, data);
+    if (card?.list?.board_id) {
+      await boardRealtimeService.emitBoardState(card.list.board_id, "card_updated");
+    }
 
     return handleServiceResponse(
       new ServiceResponse(
@@ -86,9 +90,16 @@ class CardController {
 
   async reorderCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
-    const { newIndex } = req.body;
+    const { newIndex, board_version } = req.body;
 
-    const cards = await cardService.reorderCard(id, newIndex);
+    const cards = await cardService.reorderCard(id, newIndex, board_version);
+    const firstCard = cards[0];
+    if (firstCard?.list?.board_id) {
+      await boardRealtimeService.emitBoardState(
+        firstCard.list.board_id,
+        "card_reordered",
+      );
+    }
 
     return handleServiceResponse(
       new ServiceResponse(
@@ -103,15 +114,23 @@ class CardController {
 
   async moveCard(req: Request, res: Response) {
     const id = parseInt(req.params.id);
-    const { toBoardId, toListId, newIndex } = req.body;
+    const { toBoardId, toListId, newIndex, board_version, target_board_version } =
+      req.body;
 
-    const cards = await cardService.moveCard(id, toBoardId, toListId, newIndex);
+    const result = await cardService.moveCard(id, toBoardId, toListId, newIndex, {
+      boardVersion: board_version,
+      targetBoardVersion: target_board_version,
+    });
+    await boardRealtimeService.emitManyBoardStates(
+      result.boardIds,
+      "card_reordered",
+    );
 
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Move card successfully",
-        cards,
+        result.cards,
         200,
       ),
       res,

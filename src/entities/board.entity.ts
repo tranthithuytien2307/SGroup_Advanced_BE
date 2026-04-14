@@ -4,9 +4,9 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
-  UpdateDateColumn,
   OneToMany,
   JoinColumn,
+  VersionColumn,
 } from "typeorm";
 import { Workspace } from "./workspace.entity";
 import { User } from "./user.entity";
@@ -78,6 +78,9 @@ export class Board {
 
   @Column({ type: "int", nullable: true })
   card_id!: number | null;
+
+  @VersionColumn({ default: 1 })
+  version!: number;
 
   @CreateDateColumn({ type: "timestamp" })
   created_at!: Date;

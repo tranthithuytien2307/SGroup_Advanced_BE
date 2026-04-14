@@ -141,7 +141,14 @@ cardRegistry.registerPath({
   responses: createApiResponse(z.null(), "Update card"),
 });
 
-router.put("/:id", authMiddleware, asyncHandler(cardController.updateCard));
+router.put(
+  "/:id",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  validateRequest(z.object({ id: z.string() }), "params"),
+  validateRequest(CardSchema.Update, "body"),
+  asyncHandler(cardController.updateCard),
+);
 
 cardRegistry.registerPath({
   method: "patch",
@@ -244,6 +251,9 @@ cardRegistry.registerPath({
 router.post(
   "/:id/reorder",
   authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  validateRequest(z.object({ id: z.string() }), "params"),
+  validateRequest(CardSchema.Reorder, "body"),
   asyncHandler(cardController.reorderCard),
 );
 
@@ -268,6 +278,9 @@ cardRegistry.registerPath({
 router.patch(
   "/:id/move",
   authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  validateRequest(z.object({ id: z.string() }), "params"),
+  validateRequest(CardSchema.Move, "body"),
   asyncHandler(cardController.moveCard),
 );
 

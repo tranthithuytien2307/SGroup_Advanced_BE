@@ -7,6 +7,7 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  VersionColumn,
 } from "typeorm";
 import { List } from "./list.entity";
 import { Label } from "./label.entity";
@@ -69,6 +70,9 @@ export class Card {
 
   @Column({ type: "text", nullable: true })
   cover_url!: string | null;
+
+  @VersionColumn({ default: 1 })
+  version!: number;
 
   @OneToMany(() => CardMember, (member) => member.card)
   members!: CardMember[];

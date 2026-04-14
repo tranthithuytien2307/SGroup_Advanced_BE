@@ -85,6 +85,11 @@ export const CardSchema = {
     .openapi("CardDateStatusResponse"),
   Update: z
     .object({
+      version: z
+        .number()
+        .int()
+        .nonnegative()
+        .openapi({ description: "Current card version" }),
       title: z.string().optional().openapi({ description: "Card title" }),
       description: z
         .string()
@@ -111,6 +116,11 @@ export const CardSchema = {
 
   Reorder: z
     .object({
+      board_version: z
+        .number()
+        .int()
+        .nonnegative()
+        .openapi({ description: "Current board version" }),
       newIndex: z
         .number()
         .min(0, "Index must be non-negative")
@@ -122,6 +132,17 @@ export const CardSchema = {
     .object({
       toBoardId: z.number().openapi({ description: "Target Board ID" }),
       toListId: z.number().openapi({ description: "Target List ID" }),
+      board_version: z
+        .number()
+        .int()
+        .nonnegative()
+        .openapi({ description: "Current source board version" }),
+      target_board_version: z
+        .number()
+        .int()
+        .nonnegative()
+        .optional()
+        .openapi({ description: "Current target board version if moving across boards" }),
       newIndex: z
         .number()
         .min(0)

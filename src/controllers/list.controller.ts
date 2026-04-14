@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import listService from "../services/list.service";
 import { ServiceResponse, ResponseStatus } from "../provides/service.response";
 import { handleServiceResponse } from "../utils/http-handler";
+import boardRealtimeService from "../services/board-realtime.service";
 
 class ListController {
   async getListsByBoard(req: Request, res: Response) {
@@ -36,6 +37,9 @@ class ListController {
     const id = parseInt(req.params.id);
     const data = req.body;
     const list = await listService.updateList(id, data);
+    if (list?.board_id) {
+      await boardRealtimeService.emitBoardState(list.board_id, "list_updated");
+    }
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
@@ -79,13 +83,20 @@ class ListController {
 
   async moveList(req: Request, res: Response) {
     const id = parseInt(req.params.id);
-    const { newBoardId, newIndex } = req.body;
-    const list = await listService.moveList(id, newBoardId, newIndex);
+    const { newBoardId, newIndex, board_version, target_board_version } = req.body;
+    const result = await listService.moveList(id, Number(newBoardId), newIndex, {
+      boardVersion: board_version,
+      targetBoardVersion: target_board_version,
+    });
+    await boardRealtimeService.emitManyBoardStates(
+      result.boardIds,
+      "list_reordered",
+    );
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
         "Move list successfully",
-        list,
+        result.list,
         200,
       ),
       res,
@@ -128,8 +139,12 @@ class ListController {
 
   async reorderList(req: Request, res: Response) {
     const id = parseInt(req.params.id);
-    const { newIndex } = req.body;
-    const lists = await listService.reorderList(id, newIndex);
+    const { newIndex, board_version } = req.body;
+    const lists = await listService.reorderList(id, newIndex, board_version);
+    const boardId = lists[0]?.board_id;
+    if (boardId) {
+      await boardRealtimeService.emitBoardState(boardId, "list_reordered");
+    }
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
