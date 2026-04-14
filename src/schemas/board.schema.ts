@@ -144,6 +144,26 @@ export const BoardSchema = {
       }),
     })
     .openapi("UpdateBoardVisibilityRequest"),
+
+  CreateBackgroundUpload: z
+    .object({
+      file_name: z.string().min(1).openapi({ description: "Original file name" }),
+      content_type: z
+        .string()
+        .min(1)
+        .openapi({ description: "MIME type of background file" }),
+    })
+    .openapi("CreateBoardBackgroundPresignRequest"),
+
+  UpdateBackground: z
+    .object({
+      cover_url: z.string().url().nullable().optional(),
+      theme: z.string().nullable().optional(),
+    })
+    .refine((b) => Object.keys(b).length > 0, {
+      message: "At least one field must be provided",
+    })
+    .openapi("UpdateBoardBackgroundRequest"),
 };
 
 export type CreateBoardInput = z.infer<typeof BoardSchema.Create>;

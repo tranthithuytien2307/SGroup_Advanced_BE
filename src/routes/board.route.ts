@@ -9,7 +9,6 @@ import { authorizeWorkspace } from "../middleware/rbac-workspace.middleware";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
-import { uploadBoardBackgroundMulter } from "../utils/cloudinary.storage";
 
 export const boardRegistry = new OpenAPIRegistry();
 const router = Router();
@@ -51,17 +50,28 @@ router.get(
 );
 
 // Route
-router.put(
-  "/:boardId/background",
+router.post(
+  "/:board_id/background/presign",
   authMiddleware,
-  uploadBoardBackgroundMulter.single("background"),
+  authorizeBoard(["admin", "member"]),
+  validateRequest(BoardSchema.GetById, "params"),
+  validateRequest(BoardSchema.CreateBackgroundUpload, "body"),
+  asyncHandler(boardController.createBackgroundUploadUrl),
+);
+
+router.put(
+  "/:board_id/background",
+  authMiddleware,
+  authorizeBoard(["admin", "member"]),
+  validateRequest(BoardSchema.GetById, "params"),
+  validateRequest(BoardSchema.UpdateBackground, "body"),
   asyncHandler(boardController.updateBackground),
 );
 
 // Registry
 boardRegistry.registerPath({
-  method: "put",
-  path: "/api/boards/{boardId}/background",
+  method: "post",
+  path: "/api/board/{boardId}/background/presign",
   tags: ["Board"],
   security: [{ BearerAuth: [] }],
   request: {

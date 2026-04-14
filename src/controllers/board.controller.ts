@@ -304,12 +304,11 @@ class BoardController {
   };
 
   async updateBackground(req: Request, res: Response) {
-    const { boardId } = req.params;
-    const { theme } = req.body;
-    const coverUrl = req.file?.path;
+    const boardId = Number(req.params.board_id);
+    const { theme, cover_url } = req.body;
 
     const updateData: any = {};
-    if (coverUrl) updateData.cover_url = coverUrl;
+    if (cover_url !== undefined) updateData.cover_url = cover_url;
     if (theme) {
       updateData.theme = theme;
       updateData.cover_url = null;
@@ -325,6 +324,31 @@ class BoardController {
         ResponseStatus.Sucess,
         "Background updated",
         updatedBoard,
+        200,
+      ),
+      res,
+    );
+  }
+
+  async createBackgroundUploadUrl(req: Request, res: Response) {
+    const boardId = parseInt(req.params.board_id, 10);
+
+    if (Number.isNaN(boardId)) {
+      throw new BadRequestError("Invalid Board Id");
+    }
+
+    const { file_name, content_type } = req.body;
+    const uploadData = await boardService.createBackgroundUploadUrl(
+      boardId,
+      file_name,
+      content_type,
+    );
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Board background upload URL created",
+        uploadData,
         200,
       ),
       res,

@@ -1,6 +1,6 @@
 import { User } from "../entities/user.entity";
 import userModel from "../model/user.model";
-import cloudinary from "../utils/cloudinary";
+import objectStorageService from "./object-storage.service";
 import {
   BadRequestError,
   InternalServerError,
@@ -98,6 +98,21 @@ class UserService {
       console.error("Error in updateProfile:", error);
       throw new InternalServerError("Failed to update profile");
     }
+  }
+
+  async createAvatarUploadUrl(
+    userId: number,
+    fileName: string,
+    contentType: string,
+  ) {
+    const user = await userModel.getUserById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    return objectStorageService.createPresignedUploadUrl({
+      folder: `avatars/${userId}`,
+      fileName,
+      contentType,
+    });
   }
 
   async uploadAvatar(userId: number, avatarUrl: string): Promise<User> {

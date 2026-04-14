@@ -21,6 +21,12 @@ class AttachmentModel {
     return await this.attachmentRepo.save(attachment);
   }
 
+  async getById(id: number): Promise<Attachment | null> {
+    return await this.attachmentRepo.findOne({
+      where: { id },
+    });
+  }
+
   async delete(id: number): Promise<void> {
     await this.attachmentRepo.delete({ id });
   }

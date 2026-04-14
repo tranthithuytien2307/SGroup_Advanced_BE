@@ -3,15 +3,24 @@ import attachmentController from "../controllers/attachment.controller";
 import asyncHandler from "../middleware/asyncHandler";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { authorizeCardById } from "../middleware/rbac.card.middleware";
-import { uploadAttachment } from "../utils/multer.config";
+import { validateRequest } from "../utils/http-handler";
+import { AttachmentSchema } from "../schemas/attachment.schema";
 
 const router = Router();
+
+router.post(
+  "/presign",
+  authMiddleware,
+  authorizeCardById(["admin", "member"]),
+  validateRequest(AttachmentSchema.Presign, "body"),
+  asyncHandler(attachmentController.createUploadUrl)
+);
 
 router.post(
   "/upload",
   authMiddleware,
   authorizeCardById(["admin", "member"]),
-  uploadAttachment.single("file"),
+  validateRequest(AttachmentSchema.Upload, "body"),
   asyncHandler(attachmentController.upload)
 );
 

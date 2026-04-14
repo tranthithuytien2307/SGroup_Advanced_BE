@@ -105,13 +105,42 @@ class UserController {
     );
   }
 
+  static async createAvatarUploadUrl(req: Request, res: Response) {
+    const userId = (req as any).user?.id;
+    const { file_name, content_type } = req.body;
+
+    if (!userId) {
+      throw new BadRequestError("User ID is required");
+    }
+
+    const uploadData = await UserService.createAvatarUploadUrl(
+      userId,
+      file_name,
+      content_type,
+    );
+
+    return handleServiceResponse(
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        "Avatar upload URL created",
+        uploadData,
+        200,
+      ),
+      res,
+    );
+  }
+
   static async uploadAvatar(req: Request, res: Response) {
     const userId = (req as any).user?.id;
     // Với CloudinaryStorage, path chính là URL của ảnh trên Cloudinary
-    const avatarUrl = req.file?.path;
+    const avatarUrl = req.body?.avatar_url;
+
+    if (!userId) {
+      throw new BadRequestError("User ID is required");
+    }
 
     if (!avatarUrl) {
-      throw new BadRequestError("No file uploaded");
+      throw new BadRequestError("Avatar URL is required");
     }
 
     const updatedUser = await UserService.uploadAvatar(userId, avatarUrl);

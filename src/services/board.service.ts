@@ -12,6 +12,7 @@ import { BoardMember, BoardRole } from "../entities/board-member.entity";
 import { InternalServerError, ErrorResponse } from "../handler/error.response";
 import { List } from "../entities/list.entity";
 import { Card } from "../entities/card.entity";
+import objectStorageService from "./object-storage.service";
 
 class BoardService {
   async getAll(): Promise<Board[]> {
@@ -249,6 +250,21 @@ class BoardService {
     if (!updated) throw new InternalServerError("Failed to update background");
 
     return updated;
+  }
+
+  async createBackgroundUploadUrl(
+    boardId: number,
+    fileName: string,
+    contentType: string,
+  ) {
+    const board = await boardModel.getById(boardId);
+    if (!board) throw new NotFoundError("Board not found");
+
+    return objectStorageService.createPresignedUploadUrl({
+      folder: `boards/${boardId}/backgrounds`,
+      fileName,
+      contentType,
+    });
   }
 
   async regenerateInviteLink(id: number): Promise<Board> {

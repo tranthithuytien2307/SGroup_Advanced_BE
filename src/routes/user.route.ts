@@ -4,12 +4,10 @@ import { authMiddleware } from "../middleware/auth.middleware";
 import { authorization } from "../middleware/rbac.middleware";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { validateRequest } from "../utils/http-handler";
-import upload from "../middleware/upload.middleware";
 import { UserSchema } from "../schemas/user.schema";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import { z } from "zod";
 import { createApiResponse } from "../api-docs/openAPIResponseBuilders";
-import { uploadAvatarMulter } from "../utils/cloudinary.storage";
 
 export const userRegistry = new OpenAPIRegistry();
 const router = Router();
@@ -39,6 +37,36 @@ router.put(
 // Permission: update_self
 // ===============================
 userRegistry.registerPath({
+  method: "post",
+  path: "/api/user/avatar/presign",
+  tags: ["User"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": { schema: UserSchema.AvatarPresign },
+      },
+    },
+  },
+  responses: createApiResponse(
+    z.object({
+      uploadUrl: z.string(),
+      fileUrl: z.string(),
+      objectKey: z.string(),
+    }),
+    "Create avatar upload URL",
+  ),
+});
+
+router.post(
+  "/user/avatar/presign",
+  authMiddleware,
+  authorization("update_self"),
+  validateRequest(UserSchema.AvatarPresign, "body"),
+  asyncHandler(userController.createAvatarUploadUrl),
+);
+
+userRegistry.registerPath({
   method: "put",
   path: "/api/user/avatar",
   tags: ["User"],
@@ -46,10 +74,8 @@ userRegistry.registerPath({
   request: {
     body: {
       content: {
-        "multipart/form-data": {
-          schema: z.object({
-            avatar: z.any(),
-          }),
+        "application/json": {
+          schema: UserSchema.UpdateAvatar,
         },
       },
     },
@@ -64,7 +90,7 @@ router.put(
   "/user/avatar",
   authMiddleware,
   authorization("update_self"),
-  uploadAvatarMulter.single("avatar"),
+  validateRequest(UserSchema.UpdateAvatar, "body"),
   asyncHandler(userController.uploadAvatar),
 );
 

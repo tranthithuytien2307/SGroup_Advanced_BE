@@ -78,6 +78,22 @@ export const UserSchema = {
       message: "At least one field must be provided",
     })
     .openapi("UpdateUserProfileRequest"),
+
+  AvatarPresign: z
+    .object({
+      file_name: z.string().min(1).openapi({ description: "Original file name" }),
+      content_type: z
+        .string()
+        .min(1)
+        .openapi({ description: "MIME type of avatar file" }),
+    })
+    .openapi("CreateAvatarPresignRequest"),
+
+  UpdateAvatar: z
+    .object({
+      avatar_url: z.string().url().openapi({ description: "Uploaded avatar URL" }),
+    })
+    .openapi("UpdateAvatarRequest"),
 };
 
 export type CreateUserInput = z.infer<typeof UserSchema.Create>;
