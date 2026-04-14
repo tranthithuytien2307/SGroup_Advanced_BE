@@ -55,6 +55,10 @@ export const BoardSchema = {
         .optional()
         .nullable()
         .openapi({ description: "Description" }),
+      theme: z
+        .enum(["light", "dark", "colorful"])
+        .optional()
+        .openapi({ description: "Board theme" }),
     })
     .refine((b) => Object.keys(b).length > 0, {
       message: "At least one field must be provided",
@@ -118,7 +122,7 @@ export const BoardSchema = {
       board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),
     })
     .openapi("UnarchiveBoardParams"),
-    
+
   GetArchived: z
     .object({
       board_id: z.string().regex(/^\d+$/, "Board ID must be a number"),

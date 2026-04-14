@@ -81,6 +81,7 @@ class BoardModel {
       .leftJoin("board.members", "member")
       .leftJoin("board.lists", "list")
       .where("board.workspace_id = :workspace_id", { workspace_id })
+      .andWhere("board.is_archived = :isArchived", { isArchived: false })
       .addSelect("COUNT(DISTINCT member.id)", "memberCount")
       .addSelect("COUNT(DISTINCT list.id)", "listCount")
       .groupBy("board.id")

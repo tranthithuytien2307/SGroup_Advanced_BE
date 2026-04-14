@@ -1,9 +1,11 @@
 import workspaceModel from "../model/workspace.model";
 import {
+  BadRequestError,
   ForbiddenError,
   InternalServerError,
   NotFoundError,
 } from "../handler/error.response";
+import boardModel from "../model/board.model";
 
 class WorkspaceService {
   async getAll() {
@@ -51,7 +53,7 @@ class WorkspaceService {
       const workspace = await workspaceModel.createWorkspace(
         name,
         description,
-        ownerId
+        ownerId,
       );
 
       // Add owner as member with "owner" role
@@ -68,7 +70,7 @@ class WorkspaceService {
     name: string,
     description: string,
     is_active: boolean,
-    userId: number
+    userId: number,
   ) {
     try {
       // Validate workspace exists
@@ -119,6 +121,92 @@ class WorkspaceService {
         throw error;
       }
       throw new InternalServerError("Error deleting workspace");
+    }
+  }
+
+  async getArchivedBoards(workspaceId: number, userId: number) {
+    try {
+      const workspace = await workspaceModel.getById(workspaceId);
+      if (!workspace) {
+        throw new NotFoundError("Workspace not found");
+      }
+
+      const member = workspace.members.find((m) => m.user.id === userId);
+      if (!member) {
+        throw new ForbiddenError("Permission denied");
+      }
+      return await workspaceModel.getArchivedBoardsByWorkspaceId(workspaceId);
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof ForbiddenError) {
+        throw error;
+      }
+      throw new InternalServerError("Error fetching archived boards");
+    }
+  }
+
+  async archiveWorkspace(workspaceId: number, userId: number) {
+    try {
+      const workspace = await workspaceModel.getById(workspaceId);
+      if (!workspace) {
+        throw new NotFoundError("Workspace not found");
+      }
+
+      const member = workspace.members.find((m) => m.user.id === userId);
+      if (!member) {
+        throw new ForbiddenError("Permission denied");
+      }
+
+      if (workspace.is_archived) {
+        throw new BadRequestError("Workspace already archived");
+      }
+
+      return await workspaceModel.archiveWorkspace(workspaceId);
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof ForbiddenError ||
+        error instanceof BadRequestError
+      ) {
+        throw error;
+      }
+      throw new InternalServerError("Error archiving workspace");
+    }
+  }
+
+  async unarchiveWorkspace(workspaceId: number, userId: number) {
+    try {
+      const workspace = await workspaceModel.getById(workspaceId);
+      if (!workspace) {
+        throw new NotFoundError("Workspace not found");
+      }
+
+      const member = workspace.members.find((m) => m.user.id === userId);
+      if (!member) {
+        throw new ForbiddenError("Permission denied");
+      }
+
+      if (!workspace.is_archived) {
+        throw new BadRequestError("Workspace is not archived");
+      }
+
+      return await workspaceModel.unarchiveWorkspace(workspaceId);
+    } catch (error) {
+      if (
+        error instanceof NotFoundError ||
+        error instanceof ForbiddenError ||
+        error instanceof BadRequestError
+      ) {
+        throw error;
+      }
+      throw new InternalServerError("Error unarchiving workspace");
+    }
+  }
+
+  async getArchivedWorkspaces(userId: number) {
+    try {
+      return await workspaceModel.getArchivedWorkspacesByUser(userId);
+    } catch (error) {
+      throw new InternalServerError("Error fetching archived workspaces");
     }
   }
 }

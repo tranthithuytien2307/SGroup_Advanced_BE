@@ -30,10 +30,13 @@ export class Workspace {
   @Column({ default: true })
   is_active!: boolean;
 
+  @Column({ default: false })
+  is_archived!: boolean;
+
   @Column({
     type: "varchar",
     enum: ["private", "workspace", "public"],
-    default: "private"
+    default: "private",
   })
   visibility!: "private" | "workspace" | "public";
 

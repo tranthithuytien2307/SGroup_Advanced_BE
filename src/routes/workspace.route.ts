@@ -14,6 +14,20 @@ const router = express.Router();
 
 workspaceRegistry.registerPath({
   method: "get",
+  path: "/api/workspace/archived",
+  tags: ["Workspace"],
+  security: [{ BearerAuth: [] }],
+  responses: createApiResponse(z.array(z.any()), "Get archived workspaces"),
+});
+
+router.get(
+  "/archived",
+  authMiddleware,
+  asyncHandler(workspaceController.getArchivedWorkspaces),
+);
+
+workspaceRegistry.registerPath({
+  method: "get",
   path: "/api/workspace",
   tags: ["Workspace"],
   security: [{ BearerAuth: [] }],
@@ -75,6 +89,63 @@ router.post(
   authMiddleware,
   validateRequest(WorkspaceSchema.Create, "body"),
   asyncHandler(workspaceController.createWorkspace),
+);
+
+workspaceRegistry.registerPath({
+  method: "get",
+  path: "/api/workspace/:workspace_id/boards/archived",
+  tags: ["Workspace"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: WorkspaceSchema.GetById,
+  },
+  responses: createApiResponse(z.array(z.any()), "Get archived boards"),
+});
+
+router.get(
+  "/:workspace_id/boards/archived",
+  authMiddleware,
+  validateRequest(WorkspaceSchema.GetById, "params"),
+  authorizeWorkspace(["owner", "admin", "member"]),
+  asyncHandler(workspaceController.getArchivedBoards),
+);
+
+workspaceRegistry.registerPath({
+  method: "patch",
+  path: "/api/workspace/:workspace_id/archive",
+  tags: ["Workspace"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: WorkspaceSchema.GetById,
+  },
+  responses: createApiResponse(z.any(), "Archive workspace"),
+});
+
+router.patch(
+  "/:workspace_id/archive",
+  authMiddleware,
+  validateRequest(WorkspaceSchema.GetById, "params"),
+  authorizeWorkspace(["owner", "admin"]),
+  asyncHandler(workspaceController.archiveWorkspace),
+);
+
+workspaceRegistry.registerPath({
+  method: "patch",
+  path: "/api/workspace/:workspace_id/unarchive",
+  tags: ["Workspace"],
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: WorkspaceSchema.GetById,
+  },
+  responses: createApiResponse(z.any(), "Unarchive workspace"),
+});
+
+router.patch(
+  "/:workspace_id/unarchive",
+  authMiddleware,
+  validateRequest(WorkspaceSchema.GetById, "params"),
+  authorizeWorkspace(["owner", "admin"]),
+  asyncHandler(workspaceController.unarchiveWorkspace),
 );
 
 workspaceRegistry.registerPath({
