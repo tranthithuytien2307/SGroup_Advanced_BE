@@ -20,6 +20,30 @@ const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI!;
 
 class AuthService {
+  private async issueVerificationCode(email: string): Promise<{
+    verificationCode?: string;
+    emailSent: boolean;
+  }> {
+    const verifyCode = crypto.randomBytes(3).toString("hex");
+    await redisClient.setEx(`verify:${email}`, 300, verifyCode);
+
+    try {
+      await mailService.sendVerificationEmail(email, verifyCode);
+      return { emailSent: true };
+    } catch (error) {
+      console.error("Failed to send verification email:", error);
+
+      if (process.env.NODE_ENV === "production") {
+        throw new InternalServerError("Failed to send verification email");
+      }
+
+      return {
+        emailSent: false,
+        verificationCode: verifyCode,
+      };
+    }
+  }
+
   async loginUser(
     email: string,
     password: string,
@@ -141,7 +165,11 @@ class AuthService {
     email: string,
     password: string,
     name: string,
-  ): Promise<string> {
+  ): Promise<{
+    message: string;
+    verificationCode?: string;
+    emailSent: boolean;
+  }> {
     try {
       const existingUser = (await authModel.getUserByEmail(
         email,
@@ -153,14 +181,16 @@ class AuthService {
       const { hashString } = await hashProvides.generateHash(password);
 
       const newUser = await authModel.createUser(email, hashString, name);
+      const verificationResult = await this.issueVerificationCode(newUser.email);
 
-      const verifyCode = crypto.randomBytes(3).toString("hex");
-      await redisClient.setEx(`verify:${email}`, 300, verifyCode);
-
-      await mailService.sendVerificationEmail(newUser.email, verifyCode);
-
-      return "Registration success, please check your email to verify.";
+      return {
+        message: verificationResult.emailSent
+          ? "Registration success, please check your email to verify."
+          : "Registration success. Email sending is unavailable, use the verification code returned by the API.",
+        ...verificationResult,
+      };
     } catch (error) {
+      console.error("Register user failed:", error);
       if (error instanceof ErrorResponse) {
         throw error;
       }
@@ -271,19 +301,19 @@ class AuthService {
       throw new InternalServerError("Failed to fetch user information");
     }
   }
-  async resendVerificationCode(email: string): Promise<void> {
+  async resendVerificationCode(email: string): Promise<{
+    verificationCode?: string;
+    emailSent: boolean;
+  }> {
     const user = await authModel.getUserByEmail(email);
     if (!user) {
-      throw new Error("User not found");
+      throw new BadRequestError("User not found");
     }
     if (user.isVerified) {
-      throw new Error("User already verified");
+      throw new BadRequestError("User already verified");
     }
 
-    const verifyCode = crypto.randomBytes(3).toString("hex");
-    await redisClient.setEx(`verify:${email}`, 300, verifyCode);
-
-    await mailService.sendVerificationEmail(user.email, verifyCode);
+    return this.issueVerificationCode(user.email);
   }
 
   async forgotPassword(email: string): Promise<void> {

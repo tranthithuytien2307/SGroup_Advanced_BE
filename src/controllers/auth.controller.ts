@@ -72,9 +72,14 @@ class AuthController {
 
   registerUser = async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
-    const user = await authService.registerUser(email, password, name);
+    const registerResult = await authService.registerUser(email, password, name);
     return handleServiceResponse(
-      new ServiceResponse(ResponseStatus.Sucess, "Register success", user, 201),
+      new ServiceResponse(
+        ResponseStatus.Sucess,
+        registerResult.message,
+        registerResult,
+        201,
+      ),
       res,
     );
   };
@@ -106,13 +111,15 @@ class AuthController {
       throw new BadRequestError("Missing email");
     }
 
-    await authService.resendVerificationCode(email);
+    const resendResult = await authService.resendVerificationCode(email);
 
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,
-        "Verification code resent",
-        null,
+        resendResult.emailSent
+          ? "Verification code resent"
+          : "Verification code regenerated. Email sending is unavailable, use the returned code.",
+        resendResult,
         200,
       ),
       res,
