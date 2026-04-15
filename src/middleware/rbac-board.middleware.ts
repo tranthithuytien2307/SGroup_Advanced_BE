@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppDataSource } from "../data-source";
+import { Board } from "../entities/board.entity";
 import { BoardMember } from "../entities/board-member.entity";
 import {
   AuthFailureError,
@@ -40,8 +41,9 @@ export const authorizeBoard = (
       }
 
       const boardMemberRepo = AppDataSource.getRepository(BoardMember);
+      const boardRepo = AppDataSource.getRepository(Board);
 
-      const membership = await boardMemberRepo.findOne({
+      let membership = await boardMemberRepo.findOne({
         where: {
           user: { id: userId },
           board: { id: Number(boardId) },
@@ -50,7 +52,21 @@ export const authorizeBoard = (
       });
 
       if (!membership) {
-        throw new ForbiddenError("You are not a member of this board");
+        const board = await boardRepo.findOne({
+          where: { id: boardId },
+        });
+
+        if (board?.created_by_id === userId) {
+          membership = boardMemberRepo.create({
+            board: { id: boardId } as Board,
+            user: { id: userId } as any,
+            role: "admin",
+          });
+
+          membership = await boardMemberRepo.save(membership);
+        } else {
+          throw new ForbiddenError("You are not a member of this board");
+        }
       }
 
       // Check role

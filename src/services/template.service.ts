@@ -5,6 +5,7 @@ import { TemplateCard } from "../entities/template-card.entity";
 import { List } from "../entities/list.entity";
 import { Card } from "../entities/card.entity";
 import { Board } from "../entities/board.entity";
+import { BoardMember } from "../entities/board-member.entity";
 import {
   InternalServerError,
   NotFoundError,
@@ -59,6 +60,15 @@ class TemplateService {
         workspaceId,
         ownerId,
         visibility || "private"
+      );
+
+      const boardMemberRepo = manager.getRepository(BoardMember);
+      await boardMemberRepo.save(
+        boardMemberRepo.create({
+          board,
+          user: { id: ownerId } as any,
+          role: "admin",
+        })
       );
 
       const listMap = await listCardModel.createListsFromTemplate(

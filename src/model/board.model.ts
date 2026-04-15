@@ -124,7 +124,7 @@ class BoardModel {
     const member = this.boardMemberRepository.create({
       board: { id: boardId } as Board,
       user: { id: userId } as User,
-      role: "admin",
+      role,
     });
     return await this.boardMemberRepository.save(member);
   }
