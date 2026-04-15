@@ -9,6 +9,12 @@ class CardController {
     const { list_id, title } = req.body;
 
     const card = await cardService.createCard(list_id, title);
+    if (card?.list?.board_id) {
+      await boardRealtimeService.emitBoardState(
+        card.list.board_id,
+        "card_created",
+      );
+    }
 
     return handleServiceResponse(
       new ServiceResponse(

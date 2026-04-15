@@ -22,6 +22,7 @@ class ListController {
   async createList(req: Request, res: Response) {
     const { board_id, name, coverUrl } = req.body;
     const list = await listService.createList(board_id, name, coverUrl);
+    await boardRealtimeService.emitBoardState(Number(board_id), "list_created");
     return handleServiceResponse(
       new ServiceResponse(
         ResponseStatus.Sucess,

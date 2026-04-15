@@ -20,7 +20,15 @@ class BoardRealtimeService {
 
   async emitBoardState(
     boardId: number,
-    reason: "card_updated" | "card_reordered" | "list_updated" | "list_reordered",
+    reason:
+      | "card_created"
+      | "card_updated"
+      | "card_deleted"
+      | "card_reordered"
+      | "list_created"
+      | "list_updated"
+      | "list_deleted"
+      | "list_reordered",
   ) {
     const state = await this.getBoardState(boardId);
     if (!state) return null;

@@ -40,8 +40,23 @@ async function upsert<T extends object>(
   return rec;
 }
 
+async function syncIdSequences() {
+  for (const metadata of AppDataSource.entityMetadatas) {
+    if (metadata.primaryColumns.length !== 1) continue;
+
+    const primaryColumn = metadata.primaryColumns[0];
+    if (primaryColumn.databaseName !== "id") continue;
+    if (primaryColumn.generationStrategy !== "increment") continue;
+
+    await AppDataSource.query(
+      `SELECT setval(pg_get_serial_sequence('${metadata.tableName}', 'id'), COALESCE(MAX(id), 0) + 1, false) FROM "${metadata.tableName}"`,
+    );
+  }
+}
+
 export const seedAll = async () => {
   await AppDataSource.initialize();
+  await syncIdSequences();
   console.log("✅ DB connected — seeding...\n");
 
   // ═══════════════════════════════════════════════════
@@ -138,6 +153,15 @@ export const seedAll = async () => {
       isVerified: true,
       bio: "Backend developer",
     },
+    {
+      id: 4,
+      name: "Khoi Ben",
+      email: "khoibene@gmail.com",
+      password: passwordHash,
+      role_id: roles["user"].id,
+      isVerified: true,
+      bio: "Workspace owner and board collaborator",
+    },
   ];
   const users: Record<number, User> = {};
   for (const u of usersData) {
@@ -170,6 +194,24 @@ export const seedAll = async () => {
       owner_id: 1,
       visibility: "private" as const,
     },
+    {
+      name: "Khoi Product Lab",
+      description: "Workspace for product planning between Khoi and admin",
+      owner_id: 4,
+      visibility: "workspace" as const,
+    },
+    {
+      name: "SGroup Ops Hub",
+      description: "Shared workspace for operations and releases",
+      owner_id: 1,
+      visibility: "workspace" as const,
+    },
+    {
+      name: "Client Success Desk",
+      description: "Workspace to coordinate client onboarding tasks",
+      owner_id: 4,
+      visibility: "private" as const,
+    },
   ];
   const workspaces: Workspace[] = [];
   for (const w of workspacesData) {
@@ -195,6 +237,12 @@ export const seedAll = async () => {
     { user_id: 3, workspace: workspaces[0], role: "member" as const },
     { user_id: 1, workspace: workspaces[1], role: "owner" as const },
     { user_id: 2, workspace: workspaces[1], role: "admin" as const },
+    { user_id: 4, workspace: workspaces[2], role: "owner" as const },
+    { user_id: 1, workspace: workspaces[2], role: "admin" as const },
+    { user_id: 1, workspace: workspaces[3], role: "owner" as const },
+    { user_id: 4, workspace: workspaces[3], role: "member" as const },
+    { user_id: 4, workspace: workspaces[4], role: "owner" as const },
+    { user_id: 1, workspace: workspaces[4], role: "viewer" as const },
   ];
   for (const m of wsMembersData) {
     const exists = await wsMemberRepo.findOne({
@@ -248,6 +296,30 @@ export const seedAll = async () => {
       visibility: "workspace" as const,
       theme: "#7C3AED",
     },
+    {
+      name: "Khoi Launch Plan",
+      description: "Launch checklist and milestones for Khoi's workspace",
+      workspace_id: workspaces[2].id,
+      created_by_id: 4,
+      visibility: "workspace" as const,
+      theme: "#2563EB",
+    },
+    {
+      name: "Ops Release Calendar",
+      description: "Track release windows and operational handoffs",
+      workspace_id: workspaces[3].id,
+      created_by_id: 1,
+      visibility: "workspace" as const,
+      theme: "#EA580C",
+    },
+    {
+      name: "Client Onboarding Board",
+      description: "Tasks for onboarding new client accounts",
+      workspace_id: workspaces[4].id,
+      created_by_id: 4,
+      visibility: "private" as const,
+      theme: "#0F766E",
+    },
   ];
   const boards: Board[] = [];
   for (const b of boardsData) {
@@ -278,6 +350,12 @@ export const seedAll = async () => {
     { user_id: 1, board: boards[2], role: "admin" as const },
     { user_id: 1, board: boards[3], role: "admin" as const },
     { user_id: 2, board: boards[3], role: "admin" as const },
+    { user_id: 4, board: boards[4], role: "admin" as const },
+    { user_id: 1, board: boards[4], role: "member" as const },
+    { user_id: 1, board: boards[5], role: "admin" as const },
+    { user_id: 4, board: boards[5], role: "member" as const },
+    { user_id: 4, board: boards[6], role: "admin" as const },
+    { user_id: 1, board: boards[6], role: "viewer" as const },
   ];
   for (const m of boardMembersData) {
     const exists = await boardMemberRepo.findOne({

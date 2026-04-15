@@ -26,7 +26,8 @@ class CardService {
       const count = await cardModel.countCardsByListId(listId);
       const position = (count + 1) * 100;
 
-      return await cardModel.createCard(listId, title, position);
+      const createdCard = await cardModel.createCard(listId, title, position);
+      return await cardModel.getById(createdCard.id);
     } catch (e) {
       if (e instanceof ErrorResponse) throw e;
       throw new InternalServerError("Failed to create card");
